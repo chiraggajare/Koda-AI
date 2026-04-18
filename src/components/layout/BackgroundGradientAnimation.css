@@ -1,0 +1,367 @@
+.bg-anim-container {
+  position: fixed;
+  inset: 0;
+  width: 100vw;
+  height: 100vh;
+  z-index: 0;
+  pointer-events: none;
+  overflow: hidden;
+
+  /* Midnight default: deep violet-black foundation */
+  background: linear-gradient(145deg, #07001e 0%, #040010 55%, #080018 100%);
+}
+
+/* Aurora — teal/emerald depths */
+[data-theme="aurora"] .bg-anim-container {
+  background: linear-gradient(145deg, #001510 0%, #000d08 55%, #001a0c 100%);
+}
+
+/* Ember — deep smouldering red-black */
+[data-theme="ember"] .bg-anim-container {
+  background: linear-gradient(145deg, #190200 0%, #0e0100 55%, #160200 100%);
+}
+
+/* Ocean — midnight navy */
+[data-theme="ocean"] .bg-anim-container {
+  background: linear-gradient(145deg, #000c1e 0%, #000510 55%, #000e22 100%);
+}
+
+/* Sakura — deep rose-black */
+[data-theme="sakura"] .bg-anim-container {
+  background: linear-gradient(145deg, #190010 0%, #0e000a 55%, #170010 100%);
+}
+
+/* Slate — deep charcoal-indigo */
+[data-theme="slate"] .bg-anim-container {
+  background: linear-gradient(145deg, #040412 0%, #020210 55%, #05050f 100%);
+}
+
+
+/* ── Grain noise SVG overlay ────────────────────────────────────
+   Monochrome fractal noise at opacity 0.04.
+   Breaks up colour banding and adds material/film depth.
+   ─────────────────────────────────────────────────────────────── */
+.bg-noise-svg {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  z-index: 5;
+  opacity: 0.04;
+  pointer-events: none;
+}
+
+
+/* ── Orb wrapper ────────────────────────────────────────────────
+   Extends 15% beyond the container on every side.
+   This guarantees that the blur falloff of edge-anchored orbs
+   happens outside the viewport clip — zero hard edges possible.
+   ─────────────────────────────────────────────────────────────── */
+.bg-orbs {
+  position: absolute;
+  inset: -15%;
+  width: 130%;
+  height: 130%;
+}
+
+
+/* ── Shared orb properties ──────────────────────────────────────*/
+.bg-blob {
+  position: absolute;
+  border-radius: 50%;
+  /*
+    Screen blend: orbs lighten the dark base additively.
+    Overlapping screen orbs create organic, believable colour mixing
+    (cyan + violet → soft blue-white in the overlap zone).
+  */
+  mix-blend-mode: screen;
+  will-change: transform;
+}
+
+
+/* ================================================================
+   ORB 1 — Primary hue bloom · top-left anchor · largest
+   ~60% viewport width. Positioned -12% from top, -8% from left
+   so the centre of the orb is at roughly 22% x, 18% y.
+   3-stop gradient: full → half opacity same hue → transparent
+   Blur: 110px (»stdDeviation 90«)
+   Midnight: violet #7C3AED → #A855F7
+   ================================================================ */
+.blob-1 {
+  width: 62vw;
+  height: 62vw;
+  top: -12%;
+  left: -8%;
+  background: radial-gradient(circle at center,
+      rgba(124, 58, 237, 0.85) 0%,
+      rgba(168, 85, 247, 0.42) 38%,
+      rgba(124, 58, 237, 0.00) 70%);
+  filter: blur(110px);
+  opacity: 0.80;
+  animation: orbDrift1 9s ease-in-out infinite alternate;
+}
+
+/* Orb 1 per-theme overrides */
+[data-theme="aurora"] .blob-1 {
+  background: radial-gradient(circle at center,
+      rgba(0, 214, 143, 0.85) 0%,
+      rgba(0, 255, 194, 0.42) 38%,
+      transparent 70%);
+}
+
+[data-theme="ember"] .blob-1 {
+  background: radial-gradient(circle at center,
+      rgba(249, 115, 22, 0.85) 0%,
+      rgba(255, 107, 53, 0.42) 38%,
+      transparent 70%);
+}
+
+[data-theme="ocean"] .blob-1 {
+  background: radial-gradient(circle at center,
+      rgba(56, 189, 248, 0.80) 0%,
+      rgba(14, 165, 233, 0.40) 38%,
+      transparent 70%);
+}
+
+[data-theme="sakura"] .blob-1 {
+  background: radial-gradient(circle at center,
+      rgba(236, 72, 153, 0.80) 0%,
+      rgba(244, 114, 182, 0.40) 38%,
+      transparent 70%);
+}
+
+[data-theme="slate"] .blob-1 {
+  background: radial-gradient(circle at center,
+      rgba(129, 140, 248, 0.80) 0%,
+      rgba(99, 102, 241, 0.40) 38%,
+      transparent 70%);
+}
+
+
+/* ================================================================
+   ORB 2 — Cool secondary hue · top-right, half off-canvas
+   ~50% viewport width. Anchored to top-right corner.
+   Blur: 95px (»stdDeviation 85«)
+   Midnight: cyan-electric #06B6D4 → #22D3EE
+   ================================================================ */
+.blob-2 {
+  width: 52vw;
+  height: 52vw;
+  top: -18%;
+  right: -14%;
+  background: radial-gradient(circle at center,
+      rgba(6, 182, 212, 0.78) 0%,
+      rgba(34, 211, 238, 0.38) 35%,
+      rgba(6, 182, 212, 0.00) 68%);
+  filter: blur(95px);
+  opacity: 0.72;
+  animation: orbDrift2 13s ease-in-out infinite alternate;
+}
+
+[data-theme="aurora"] .blob-2 {
+  background: radial-gradient(circle at center,
+      rgba(0, 168, 255, 0.75) 0%,
+      rgba(0, 200, 255, 0.38) 35%,
+      transparent 68%);
+}
+
+[data-theme="ember"] .blob-2 {
+  background: radial-gradient(circle at center,
+      rgba(255, 30, 86, 0.75) 0%,
+      rgba(239, 68, 68, 0.38) 35%,
+      transparent 68%);
+}
+
+[data-theme="ocean"] .blob-2 {
+  background: radial-gradient(circle at center,
+      rgba(129, 140, 248, 0.72) 0%,
+      rgba(99, 102, 241, 0.36) 35%,
+      transparent 68%);
+}
+
+[data-theme="sakura"] .blob-2 {
+  background: radial-gradient(circle at center,
+      rgba(232, 121, 249, 0.72) 0%,
+      rgba(217, 70, 239, 0.36) 35%,
+      transparent 68%);
+}
+
+[data-theme="slate"] .blob-2 {
+  background: radial-gradient(circle at center,
+      rgba(45, 212, 191, 0.70) 0%,
+      rgba(20, 184, 166, 0.35) 35%,
+      transparent 68%);
+}
+
+
+/* ================================================================
+   ORB 3 — Warm accent · right-center, partially off-canvas right
+   ~42% viewport width. Right-center area (80% x, 55% y).
+   Blur: 85px (»stdDeviation 80«)
+   Midnight: coral-red #EF4444 → orange #F97316
+   ================================================================ */
+.blob-3 {
+  width: 44vw;
+  height: 44vw;
+  top: 38%;
+  right: -10%;
+  background: radial-gradient(circle at center,
+      rgba(239, 68, 68, 0.68) 0%,
+      rgba(249, 115, 22, 0.34) 38%,
+      rgba(239, 68, 68, 0.00) 70%);
+  filter: blur(85px);
+  opacity: 0.62;
+  animation: orbDrift3 11s ease-in-out infinite alternate;
+}
+
+[data-theme="aurora"] .blob-3 {
+  background: radial-gradient(circle at center,
+      rgba(52, 211, 153, 0.65) 0%,
+      rgba(132, 204, 22, 0.32) 38%,
+      transparent 70%);
+}
+
+[data-theme="ember"] .blob-3 {
+  background: radial-gradient(circle at center,
+      rgba(251, 191, 36, 0.65) 0%,
+      rgba(245, 158, 11, 0.32) 38%,
+      transparent 70%);
+}
+
+[data-theme="ocean"] .blob-3 {
+  background: radial-gradient(circle at center,
+      rgba(45, 212, 191, 0.62) 0%,
+      rgba(6, 182, 212, 0.31) 38%,
+      transparent 70%);
+}
+
+[data-theme="sakura"] .blob-3 {
+  background: radial-gradient(circle at center,
+      rgba(251, 113, 133, 0.62) 0%,
+      rgba(244, 63, 94, 0.31) 38%,
+      transparent 70%);
+}
+
+[data-theme="slate"] .blob-3 {
+  background: radial-gradient(circle at center,
+      rgba(52, 211, 153, 0.60) 0%,
+      rgba(16, 185, 129, 0.30) 38%,
+      transparent 70%);
+}
+
+
+/* ================================================================
+   INTERACTIVE BLOB — Mouse follower
+   ~28% viewport width. Direct JS positioning via CSS vars.
+   NO CSS transition on top/left — position set every frame by JS.
+   Uses accent from the current theme to match it naturally.
+   ================================================================ */
+.blob-interactive {
+  width: 28vw;
+  height: 28vw;
+  top: var(--mouse-y, 50%);
+  left: var(--mouse-x, 50%);
+  transform: translate(-50%, -50%);
+  background: radial-gradient(circle at center,
+      rgba(124, 58, 237, 0.35) 0%,
+      rgba(168, 85, 247, 0.14) 40%,
+      transparent 65%);
+  filter: blur(70px);
+  opacity: 1;
+}
+
+[data-theme="aurora"] .blob-interactive {
+  background: radial-gradient(circle at center,
+      rgba(0, 255, 194, 0.30) 0%,
+      rgba(0, 168, 255, 0.14) 40%,
+      transparent 65%);
+}
+
+[data-theme="ember"] .blob-interactive {
+  background: radial-gradient(circle at center,
+      rgba(255, 107, 53, 0.32) 0%,
+      rgba(255, 30, 86, 0.14) 40%,
+      transparent 65%);
+}
+
+[data-theme="ocean"] .blob-interactive {
+  background: radial-gradient(circle at center,
+      rgba(56, 189, 248, 0.30) 0%,
+      rgba(129, 140, 248, 0.14) 40%,
+      transparent 65%);
+}
+
+[data-theme="sakura"] .blob-interactive {
+  background: radial-gradient(circle at center,
+      rgba(244, 114, 182, 0.30) 0%,
+      rgba(232, 121, 249, 0.14) 40%,
+      transparent 65%);
+}
+
+[data-theme="slate"] .blob-interactive {
+  background: radial-gradient(circle at center,
+      rgba(129, 140, 248, 0.28) 0%,
+      rgba(52, 211, 153, 0.13) 40%,
+      transparent 65%);
+}
+
+
+/* ================================================================
+   KEYFRAME ANIMATIONS
+   Three orbs each use a different prime-ish period so they NEVER
+   synchronise (LCM of 9, 13, 11 = 1287 seconds ≈ 21 minutes).
+   Movement range: 3–5% of canvas width, translate + subtle scale.
+   ================================================================ */
+
+/* Orb 1 — 9s, drifts toward upper-right then settles */
+@keyframes orbDrift1 {
+  0% {
+    transform: translate(0vw, 0vw) scale(1.00);
+  }
+
+  28% {
+    transform: translate(8vw, -10vw) scale(1.08);
+  }
+
+  62% {
+    transform: translate(-6vw, 6vw) scale(0.92);
+  }
+
+  100% {
+    transform: translate(9vw, -4vw) scale(1.05);
+  }
+}
+
+/* Orb 2 — 13s, counter-drifts toward lower-left */
+@keyframes orbDrift2 {
+  0% {
+    transform: translate(0vw, 0vw) scale(1.00);
+  }
+
+  38% {
+    transform: translate(-8vw, 7vw) scale(1.06);
+  }
+
+  72% {
+    transform: translate(5vw, -6vw) scale(0.94);
+  }
+
+  100% {
+    transform: translate(-5vw, 4vw) scale(1.04);
+  }
+}
+
+/* Orb 3 — 11s, gentle circular drift */
+@keyframes orbDrift3 {
+  0% {
+    transform: translate(0vw, 0vw) scale(1.00);
+  }
+
+  44% {
+    transform: translate(-7vw, -6vw) scale(1.10);
+  }
+
+  100% {
+    transform: translate(6vw, 7vw) scale(0.90);
+  }
+}

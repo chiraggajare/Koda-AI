@@ -1,0 +1,142 @@
+.landing-page {
+  display: flex;
+  flex-direction: column;
+  min-height: 100vh;
+}
+
+.landing-content {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  padding: 40px 16px 60px;
+  gap: 28px;
+}
+
+/* ---- Greeting ---- */
+.landing-greeting {
+  text-align: center;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 8px;
+}
+
+.greeting-icon {
+  width: 64px;
+  height: 64px;
+  border-radius: 50%;
+  background: #13131f;
+  border: 1px solid var(--accent-glow);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: var(--accent);
+  margin-bottom: 12px;
+  box-shadow: var(--shadow-accent), inset 0 0 10px rgba(124, 106, 255, 0.1);
+  animation: greetingFloat 4s ease-in-out infinite, greetingPulse 4s ease-in-out infinite;
+  position: relative;
+}
+
+.greeting-icon::after {
+  content: '';
+  position: absolute;
+  inset: -2px;
+  border-radius: 50%;
+  padding: 2px;
+  background: linear-gradient(135deg, var(--accent), var(--accent-2));
+  -webkit-mask: linear-gradient(#fff 0 0) content-box, linear-gradient(#fff 0 0);
+  mask-composite: exclude;
+  opacity: 0.5;
+}
+
+.greeting-text {
+  font-size: clamp(1.8rem, 4vw, 2.6rem);
+  font-weight: 700;
+  color: #ffffff;
+  letter-spacing: -0.03em;
+  line-height: 1.2;
+  /* Text shadow ensures readability on any background */
+  text-shadow: 0 2px 20px rgba(0,0,0,0.5);
+}
+
+.greeting-name {
+  background: linear-gradient(135deg, var(--accent), var(--accent-2));
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-clip: text;
+}
+
+.greeting-sub {
+  font-size: 1rem;
+  color: rgba(255,255,255,0.6);
+  font-weight: 400;
+  text-shadow: 0 1px 12px rgba(0,0,0,0.6);
+}
+
+/* ---- Chatbox wrapper ---- */
+.landing-chatbox {
+  width: 100%;
+  max-width: 780px;
+}
+
+/* ========== Suggestion chips ========== */
+.landing-suggestions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px;
+  max-width: 780px;
+  justify-content: center;
+}
+
+/* Translucent glass pill — blends with atmosphere */
+.suggestion-chip {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  padding: 11px 20px;
+  background: rgba(255, 255, 255, 0.05);
+  backdrop-filter: blur(16px);
+  -webkit-backdrop-filter: blur(16px);
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  border-radius: var(--radius-full);
+  font-size: 0.85rem;
+  font-weight: 500;
+  color: rgba(255, 255, 255, 0.9);
+  cursor: pointer;
+  transition: all var(--transition-base);
+  text-align: left;
+  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.2);
+}
+
+.suggestion-chip:hover {
+  background: var(--accent-dim);
+  border-color: var(--accent);
+  color: var(--accent);
+  transform: translateY(-2px);
+  box-shadow: 0 8px 24px rgba(0,0,0,0.5), var(--shadow-accent);
+}
+
+.suggestion-arrow {
+  opacity: 0;
+  transition: all var(--transition-fast);
+  transform: translateX(-4px);
+  flex-shrink: 0;
+}
+
+.suggestion-chip:hover .suggestion-arrow {
+  opacity: 1;
+  transform: translateX(0);
+}
+
+/* ========== Keyframes ========== */
+@keyframes greetingFloat {
+  0%, 100% { transform: translateY(0); }
+  50%       { transform: translateY(-10px); }
+}
+
+@keyframes greetingPulse {
+  0%, 100% { box-shadow: 0 0 15px var(--accent-glow); }
+  50%       { box-shadow: 0 0 35px var(--accent-glow); }
+}
