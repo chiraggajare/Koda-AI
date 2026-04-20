@@ -22,7 +22,7 @@ const TOOLS = [
   { id: 'link', label: 'Link Analyzer', icon: Link },
 ];
 
-export default function ChatBox({ onSend, model, onModelChange, disabled = false }) {
+export default function ChatBox({ onSend, model, onModelChange, disabled = false, injectedText = '' }) {
   const { dispatch } = useChat();
   const [text, setText] = useState('');
   const [toolsOpen, setToolsOpen] = useState(false);
@@ -32,8 +32,14 @@ export default function ChatBox({ onSend, model, onModelChange, disabled = false
   const textareaRef = useRef(null);
   const fileInputRef = useRef(null);
 
-  const handleTranscript = (t) => setText(p => p + (p ? ' ' : '') + t);
-  const { listening, toggle: toggleMic } = useVoiceInput(handleTranscript);
+  const { listening, toggle: toggleMic } = useVoiceInput(text, setText);
+
+  useEffect(() => {
+    if (injectedText) {
+      setText(injectedText);
+      textareaRef.current?.focus();
+    }
+  }, [injectedText]);
 
   // Auto-resize textarea
   useEffect(() => {
@@ -51,10 +57,10 @@ export default function ChatBox({ onSend, model, onModelChange, disabled = false
       // Skip if already focused on an input
       const tag = document.activeElement?.tagName;
       if (tag === 'INPUT' || tag === 'TEXTAREA' || document.activeElement?.isContentEditable) return;
-      
+
       // Skip command shortcuts
       if (e.metaKey || e.ctrlKey || e.altKey) return;
-      
+
       // If pressing a printable character (length 1), auto-focus the chatbox
       if (e.key.length === 1 && textareaRef.current) {
         textareaRef.current.focus();
@@ -92,7 +98,7 @@ export default function ChatBox({ onSend, model, onModelChange, disabled = false
       ...p,
       ...files.map(f => ({ id: `${f.name}_${Date.now()}`, name: f.name, type: f.type })),
     ]);
-    
+
     // Auto-add to global inventory as well
     files.forEach(f => {
       dispatch({

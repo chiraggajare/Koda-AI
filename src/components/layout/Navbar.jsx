@@ -39,9 +39,11 @@ export default function Navbar({ variant = 'landing' }) {
     navigate('/chat');
   };
 
+  const isEmptyChat = variant === 'landing' || (variant === 'chat' && activeConversation?.messages.length === 0);
+
   return (
     <>
-      <nav className="navbar" role="navigation">
+      <nav className={`navbar ${isEmptyChat ? 'navbar-transparent' : ''}`} role="navigation">
         {/* Brand */}
         <button className="navbar-brand" onClick={() => navigate('/')} id="navbar-brand">
           <span className="brand-dot" />
@@ -49,8 +51,8 @@ export default function Navbar({ variant = 'landing' }) {
         </button>
 
         {/* Chat title (only in chat variant) */}
-        {variant === 'chat' && activeConversation && (
-          <div className="navbar-title">
+        {variant === 'chat' && activeConversation && !isEmptyChat && (
+          <div className="navbar-title anim-fade-in">
             <span>{activeConversation.title}</span>
           </div>
         )}

@@ -16,11 +16,13 @@ const SUGGESTIONS = [
 ];
 
 export default function ChatPage() {
-  const { state, dispatch, sendMessage, activeConversation } = useChat();
+  const { state, dispatch, sendMessage, resendMessage, activeConversation } = useChat();
   const navigate = useNavigate();
   const location = useLocation();
   const bottomRef = useRef(null);
   const [model, setModel] = useState('fast');
+  const [injectedText, setInjectedText] = useState('');
+  const [editingMessageId, setEditingMessageId] = useState(null);
   const initialSent = useRef(false);
 
   // Send initial message if passed via state
@@ -52,6 +54,11 @@ export default function ChatPage() {
 
   const handleSend = (text) => {
     sendMessage(activeConversation.id, text, model);
+  };
+
+  const handleSuggestion = (s) => {
+    setInjectedText(s);
+    setTimeout(() => setInjectedText(''), 50);
   };
 
   const handleModelChange = (m) => {
@@ -92,7 +99,7 @@ export default function ChatPage() {
 
             <div className="landing-suggestions anim-fade-in-up" style={{ animationDelay: '0.1s', marginTop: '20px' }}>
               {SUGGESTIONS.map((s, i) => (
-                <button key={i} className="suggestion-chip" onClick={() => handleSend(s)}>
+                <button key={i} className="suggestion-chip" onClick={() => handleSuggestion(s)}>
                   <span>{s}</span>
                   <ArrowRight size={13} className="suggestion-arrow" />
                 </button>
@@ -106,6 +113,12 @@ export default function ChatPage() {
             key={message.id}
             message={message}
             conversationId={activeConversation.id}
+            isEditing={editingMessageId === message.id}
+            setEditingId={setEditingMessageId}
+            onResend={(newContent) => {
+              resendMessage(activeConversation.id, message.id, newContent, activeConversation.model);
+              setEditingMessageId(null);
+            }}
           />
         ))}
         <div ref={bottomRef} style={{ height: '80px' }} />
@@ -117,6 +130,7 @@ export default function ChatPage() {
           model={model}
           onModelChange={handleModelChange}
           disabled={isLoading}
+          injectedText={injectedText}
         />
         <p className="chat-disclaimer">
           <em>Koda is an AI and can make mistakes. Verify important information.</em>

@@ -17,21 +17,23 @@ export default function LandingPage() {
   const { state, dispatch, sendMessage } = useChat();
   const navigate = useNavigate();
   const [model, setModel] = useState('fast');
-  const pendingMsg = useRef(null);
-  const pendingModel = useRef('fast');
+  const [injectedText, setInjectedText] = useState('');
 
   const handleSend = (text) => {
     dispatch({ type: 'NEW_CONVERSATION' });
     navigate('/chat', { state: { initialMessage: text, model } });
   };
 
-  const handleSuggestion = (s) => handleSend(s);
+  const handleSuggestion = (s) => {
+    setInjectedText(s);
+    setTimeout(() => setInjectedText(''), 50);
+  };
 
   const hour = new Date().getHours();
   const greeting =
     hour < 12 ? 'Good morning' :
-    hour < 18 ? 'Good afternoon' :
-    'Good evening';
+      hour < 18 ? 'Good afternoon' :
+        'Good evening';
 
   return (
     <div className="landing-page">
@@ -51,7 +53,7 @@ export default function LandingPage() {
 
         {/* ChatBox */}
         <div className="landing-chatbox anim-fade-in-up" style={{ animationDelay: '0.1s' }}>
-          <ChatBox onSend={handleSend} model={model} onModelChange={setModel} />
+          <ChatBox onSend={handleSend} model={model} onModelChange={setModel} injectedText={injectedText} />
         </div>
 
         {/* Suggestions */}

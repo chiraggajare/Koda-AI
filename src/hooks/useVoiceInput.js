@@ -1,12 +1,13 @@
 import { useState, useRef, useCallback } from 'react';
 
-export function useVoiceInput(onTranscript) {
+export function useVoiceInput(text, setText) {
   const [listening, setListening] = useState(false);
   const recognitionRef = useRef(null);
+  const initialTextRef = useRef('');
 
   const startListening = useCallback(() => {
     if (!('webkitSpeechRecognition' in window) && !('SpeechRecognition' in window)) {
-      alert('Speech recognition is not supported in this browser. Try Chrome or Edge.');
+      alert('Speech recognition is not supported in this browser.');
       return;
     }
 
@@ -14,28 +15,29 @@ export function useVoiceInput(onTranscript) {
     const recognition = new SpeechRecognition();
     recognitionRef.current = recognition;
 
-    recognition.continuous = true;
+    recognition.continuous = false;
     recognition.interimResults = true;
     recognition.lang = 'en-US';
+
+    initialTextRef.current = text;
 
     recognition.onstart = () => setListening(true);
     recognition.onend = () => setListening(false);
     recognition.onerror = () => setListening(false);
 
     recognition.onresult = (event) => {
-      let finalTranscript = '';
+      let interim = '';
       for (let i = event.resultIndex; i < event.results.length; i++) {
-        if (event.results[i].isFinal) {
-          finalTranscript += event.results[i][0].transcript;
-        }
+        interim += event.results[i][0].transcript;
       }
-      if (finalTranscript && onTranscript) {
-        onTranscript(finalTranscript);
+      const separator = initialTextRef.current && interim ? ' ' : '';
+      if (setText) {
+        setText(initialTextRef.current + separator + interim);
       }
     };
 
     recognition.start();
-  }, [onTranscript]);
+  }, [text, setText]);
 
   const stopListening = useCallback(() => {
     if (recognitionRef.current) {

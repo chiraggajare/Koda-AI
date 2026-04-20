@@ -66,7 +66,8 @@
 }
 
 .user-bubble {
-  background: rgba(124, 106, 255, 0.35); /* Tinted transparent */
+  background: rgba(124, 106, 255, 0.35);
+  /* Tinted transparent */
   backdrop-filter: blur(12px);
   -webkit-backdrop-filter: blur(12px);
   border: 1px solid rgba(124, 106, 255, 0.2);

@@ -60,14 +60,14 @@ function chatReducer(state, action) {
         conversations: state.conversations.map(c =>
           c.id === conversationId
             ? {
-                ...c,
-                messages: [...c.messages, message],
-                title: c.messages.length === 0 && message.role === 'user'
-                  ? c.seedId 
-                    ? `${state.seeds.find(s => s.id === c.seedId)?.name || 'Seed'} - ${message.content.split(' ').slice(0, 2).join(' ').slice(0, 20)}`
-                    : message.content.slice(0, 40).trim() || 'New Chat'
-                  : c.title,
-              }
+              ...c,
+              messages: [...c.messages, message],
+              title: c.messages.length === 0 && message.role === 'user'
+                ? c.seedId
+                  ? `${state.seeds.find(s => s.id === c.seedId)?.name || 'Seed'} - ${message.content.split(' ').slice(0, 2).join(' ').slice(0, 20)}`
+                  : message.content.slice(0, 40).trim() || 'New Chat'
+                : c.title,
+            }
             : c
         ),
       };
@@ -80,13 +80,29 @@ function chatReducer(state, action) {
         conversations: state.conversations.map(c =>
           c.id === conversationId
             ? {
-                ...c,
-                messages: c.messages.map(m =>
-                  m.id === messageId ? { ...m, ...updates } : m
-                ),
-              }
+              ...c,
+              messages: c.messages.map(m =>
+                m.id === messageId ? { ...m, ...updates } : m
+              ),
+            }
             : c
         ),
+      };
+    }
+
+    case 'EDIT_AND_TRUNCATE_MESSAGES': {
+      const { conversationId, messageId, newContent } = action.payload;
+      return {
+        ...state,
+        conversations: state.conversations.map(c => {
+          if (c.id !== conversationId) return c;
+          const msgIndex = c.messages.findIndex(m => m.id === messageId);
+          if (msgIndex === -1) return c;
+          const updatedMsg = { ...c.messages[msgIndex], content: newContent, isEdited: true };
+          const newMessages = c.messages.slice(0, msgIndex);
+          newMessages.push(updatedMsg);
+          return { ...c, messages: newMessages };
+        }),
       };
     }
 
@@ -144,9 +160,9 @@ function chatReducer(state, action) {
       const type = action.payload;
       const arr = [...state.conversations];
       if (type === 'date') {
-         arr.sort((a, b) => b.createdAt - a.createdAt);
+        arr.sort((a, b) => b.createdAt - a.createdAt);
       } else if (type === 'name') {
-         arr.sort((a, b) => a.title.localeCompare(b.title));
+        arr.sort((a, b) => a.title.localeCompare(b.title));
       }
       return { ...state, conversations: arr };
     }
@@ -199,7 +215,7 @@ export function ChatProvider({ children }) {
   useEffect(() => {
     try {
       localStorage.setItem('koda_state', JSON.stringify(state));
-    } catch {}
+    } catch { }
   }, [state]);
 
   // Send a message and generate mock AI response
@@ -237,10 +253,37 @@ export function ChatProvider({ children }) {
     });
   };
 
+  const resendMessage = async (conversationId, messageId, newContent, model = 'fast') => {
+    dispatch({ type: 'EDIT_AND_TRUNCATE_MESSAGES', payload: { conversationId, messageId, newContent } });
+
+    // AI typing placeholder
+    const aiMsgId = `msg_${Date.now() + 1}`;
+    const aiMsg = {
+      id: aiMsgId,
+      role: 'assistant',
+      content: '',
+      timestamp: Date.now(),
+      model,
+      loading: true,
+      liked: null,
+    };
+    dispatch({ type: 'ADD_MESSAGE', payload: { conversationId, message: aiMsg } });
+
+    // Simulate delay
+    const delay = model === 'fast' ? 800 : model === 'thinking' ? 1800 : 3000;
+    await new Promise(r => setTimeout(r, delay));
+
+    const response = mockResponses[Math.floor(Math.random() * mockResponses.length)];
+    dispatch({
+      type: 'UPDATE_MESSAGE',
+      payload: { conversationId, messageId: aiMsgId, updates: { content: response, loading: false } },
+    });
+  };
+
   const activeConversation = state.conversations.find(c => c.id === state.activeConversationId) || null;
 
   return (
-    <ChatContext.Provider value={{ state, dispatch, sendMessage, activeConversation }}>
+    <ChatContext.Provider value={{ state, dispatch, sendMessage, resendMessage, activeConversation }}>
       {children}
     </ChatContext.Provider>
   );
