@@ -3,7 +3,7 @@ import { useNavigate, useLocation } from 'react-router-dom';
 import {
   Menu, Search, Plus, Package, Sprout, MessageSquare,
   Settings, ChevronRight, Pin, MoreHorizontal, X,
-  Palette, ChevronDown,
+  Palette, ChevronDown, Clock, Type
 } from 'lucide-react';
 import { useChat } from '../../context/ChatContext';
 import { useTheme } from '../../context/ThemeContext';
@@ -22,6 +22,11 @@ export default function Sidebar({ open, onToggle }) {
   const [hoveredChat, setHoveredChat] = useState(null);
   const [chatMenuOpen, setChatMenuOpen] = useState(null);
   const [seedsExpanded, setSeedsExpanded] = useState(true);
+
+  const [renamingId, setRenamingId] = useState(null);
+  const [renameValue, setRenameValue] = useState('');
+  const [draggedChat, setDraggedChat] = useState(null);
+  const [sortBy, setSortBy] = useState('custom');
 
   React.useEffect(() => {
     if (!open) {
@@ -62,11 +67,41 @@ export default function Sidebar({ open, onToggle }) {
     setChatMenuOpen(null);
   };
 
-  const handleRename = (e, id) => {
+  const handleRenameClick = (e, id, currentTitle) => {
     e.stopPropagation();
-    const newTitle = prompt('Rename chat:');
-    if (newTitle) dispatch({ type: 'RENAME_CONVERSATION', payload: { conversationId: id, title: newTitle } });
+    setRenamingId(id);
+    setRenameValue(currentTitle);
     setChatMenuOpen(null);
+  };
+
+  const submitRename = (id) => {
+    if (renameValue.trim()) {
+      dispatch({ type: 'RENAME_CONVERSATION', payload: { conversationId: id, title: renameValue.trim() } });
+    }
+    setRenamingId(null);
+  };
+
+  const handleDragStart = (e, conv) => {
+    setDraggedChat(conv);
+    e.dataTransfer.effectAllowed = 'move';
+  };
+
+  const handleDragOver = (e) => {
+    e.preventDefault();
+    e.dataTransfer.dropEffect = 'move';
+  };
+
+  const handleDrop = (e, targetConv) => {
+    e.preventDefault();
+    if (!draggedChat || draggedChat.id === targetConv.id) return;
+    dispatch({ type: 'REORDER_CONVERSATIONS', payload: { draggedId: draggedChat.id, targetId: targetConv.id } });
+    setDraggedChat(null);
+    setSortBy('custom');
+  };
+
+  const handleSort = (type) => {
+    setSortBy(type);
+    dispatch({ type: 'SORT_CONVERSATIONS', payload: type });
   };
 
   const handleSeedClick = (seedId) => {
@@ -79,20 +114,43 @@ export default function Sidebar({ open, onToggle }) {
     return (
       <div
         key={conv.id}
+        draggable
+        onDragStart={(e) => handleDragStart(e, conv)}
+        onDragOver={handleDragOver}
+        onDrop={(e) => handleDrop(e, conv)}
         className={`sidebar-chat-item ${isActive ? 'active' : ''}`}
         onClick={() => handleSelectChat(conv.id)}
         onMouseEnter={() => setHoveredChat(conv.id)}
         onMouseLeave={() => { setHoveredChat(null); if (chatMenuOpen === conv.id) setChatMenuOpen(null); }}
       >
         <MessageSquare size={13} className="chat-icon" />
-        <span className="chat-title">{conv.title}</span>
-        {conv.pinned && <Pin size={11} className="pin-icon" />}
-        <div className="chat-item-actions" onClick={e => { e.stopPropagation(); setChatMenuOpen(chatMenuOpen === conv.id ? null : conv.id); }}>
-          <MoreHorizontal size={14} />
-        </div>
-        {chatMenuOpen === conv.id && (
+
+        {renamingId === conv.id ? (
+          <input
+            autoFocus
+            className="rename-input"
+            value={renameValue}
+            onChange={(e) => setRenameValue(e.target.value)}
+            onBlur={() => submitRename(conv.id)}
+            onKeyDown={(e) => {
+              if (e.key === 'Enter') submitRename(conv.id);
+              if (e.key === 'Escape') setRenamingId(null);
+            }}
+            onClick={(e) => e.stopPropagation()}
+          />
+        ) : (
+          <span className="chat-title">{conv.title}</span>
+        )}
+
+        {conv.pinned && !renamingId && <Pin size={11} className="pin-icon" />}
+        {!renamingId && (
+          <div className="chat-item-actions" onClick={e => { e.stopPropagation(); setChatMenuOpen(chatMenuOpen === conv.id ? null : conv.id); }}>
+            <MoreHorizontal size={14} />
+          </div>
+        )}
+        {chatMenuOpen === conv.id && !renamingId && (
           <div className="chat-context-menu anim-scale-in">
-            <button onClick={e => handleRename(e, conv.id)}>Rename</button>
+            <button onClick={e => handleRenameClick(e, conv.id, conv.title)}>Rename</button>
             <button onClick={e => handlePin(e, conv.id)}>{conv.pinned ? 'Unpin' : 'Pin'}</button>
             <button className="danger" onClick={e => handleDelete(e, conv.id)}>Delete</button>
           </div>
@@ -184,7 +242,25 @@ export default function Sidebar({ open, onToggle }) {
           <div className="divider" />
 
           {/* Chats heading */}
-          <div className="sidebar-section-label">Chats</div>
+          <div className="sidebar-section-header">
+            <div className="sidebar-section-label">Chats</div>
+            <div className="sidebar-sort-controls">
+              <button 
+                title="Sort by Date" 
+                className={sortBy === 'date' ? 'active-sort' : ''} 
+                onClick={() => handleSort('date')}
+              >
+                <Clock size={11} />
+              </button>
+              <button 
+                title="Sort by Name" 
+                className={sortBy === 'name' ? 'active-sort' : ''} 
+                onClick={() => handleSort('name')}
+              >
+                <Type size={11} />
+              </button>
+            </div>
+          </div>
 
           {pinned.length > 0 && (
             <>

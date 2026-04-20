@@ -259,9 +259,7 @@
 .blob-interactive {
   width: 28vw;
   height: 28vw;
-  top: var(--mouse-y, 50%);
-  left: var(--mouse-x, 50%);
-  transform: translate(-50%, -50%);
+  /* Top/Left removed to avoid layout engine - JS handles transform */
   background: radial-gradient(circle at center,
       rgba(124, 58, 237, 0.35) 0%,
       rgba(168, 85, 247, 0.14) 40%,

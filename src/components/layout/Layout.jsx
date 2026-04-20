@@ -2,6 +2,7 @@ import React, { useState } from 'react';
 import { useMouseGradient } from '../../hooks/useMouseGradient';
 import Sidebar from './Sidebar';
 import BackgroundGradientAnimation from './BackgroundGradientAnimation';
+import ParticlesBackground from './ParticlesBackground';
 import './Layout.css';
 
 export default function Layout({ children }) {
@@ -12,6 +13,7 @@ export default function Layout({ children }) {
     <div className="layout-root">
       {/* Animated gradient background */}
       <BackgroundGradientAnimation />
+      <ParticlesBackground />
 
       <Sidebar open={sidebarOpen} onToggle={() => setSidebarOpen(o => !o)} />
 

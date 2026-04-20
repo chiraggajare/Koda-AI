@@ -129,6 +129,28 @@ function chatReducer(state, action) {
       };
     }
 
+    case 'REORDER_CONVERSATIONS': {
+      const { draggedId, targetId } = action.payload;
+      const arr = [...state.conversations];
+      const draggedIndex = arr.findIndex(c => c.id === draggedId);
+      const targetIndex = arr.findIndex(c => c.id === targetId);
+      if (draggedIndex === -1 || targetIndex === -1) return state;
+      const [removed] = arr.splice(draggedIndex, 1);
+      arr.splice(targetIndex, 0, removed);
+      return { ...state, conversations: arr };
+    }
+
+    case 'SORT_CONVERSATIONS': {
+      const type = action.payload;
+      const arr = [...state.conversations];
+      if (type === 'date') {
+         arr.sort((a, b) => b.createdAt - a.createdAt);
+      } else if (type === 'name') {
+         arr.sort((a, b) => a.title.localeCompare(b.title));
+      }
+      return { ...state, conversations: arr };
+    }
+
     // Seeds
     case 'SAVE_SEED': {
       const seed = action.payload;

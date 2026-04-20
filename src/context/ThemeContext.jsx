@@ -16,17 +16,30 @@ export function ThemeProvider({ children }) {
     return localStorage.getItem('koda_theme') || 'midnight';
   });
 
+  const [particlesEnabled, setParticlesEnabled] = useState(() => {
+    const saved = localStorage.getItem('koda_particles');
+    return saved !== 'false';
+  });
+
   useEffect(() => {
     document.documentElement.setAttribute('data-theme', activeTheme === 'midnight' ? '' : activeTheme);
     localStorage.setItem('koda_theme', activeTheme);
   }, [activeTheme]);
 
+  useEffect(() => {
+    localStorage.setItem('koda_particles', particlesEnabled);
+  }, [particlesEnabled]);
+
   const changeTheme = (themeId) => {
     setActiveTheme(themeId);
   };
 
+  const toggleParticles = () => {
+    setParticlesEnabled(p => !p);
+  };
+
   return (
-    <ThemeContext.Provider value={{ activeTheme, changeTheme, THEMES }}>
+    <ThemeContext.Provider value={{ activeTheme, changeTheme, THEMES, particlesEnabled, toggleParticles }}>
       {children}
     </ThemeContext.Provider>
   );

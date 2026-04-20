@@ -25,17 +25,34 @@
   width: var(--sidebar-collapsed-width);
 }
 
-.sidebar.closed .sidebar-search-btn,
 .sidebar.closed .sidebar-search,
-.sidebar.closed .divider,
-.sidebar.closed .sidebar-nav {
+.sidebar.closed .divider {
   display: none;
 }
 
 .sidebar.closed .sidebar-new-chat span,
+.sidebar.closed .sidebar-nav-item span,
+.sidebar.closed .sidebar-chat-item .chat-title,
+.sidebar.closed .sidebar-seed-item span:not(.seed-dot),
+.sidebar.closed .sidebar-section-header,
+.sidebar.closed .sidebar-subsection-label,
+.sidebar.closed .chat-item-actions,
 .sidebar.closed .sidebar-footer .sidebar-nav-item span,
 .sidebar.closed .expand-icon {
   display: none;
+}
+
+.sidebar.closed .sidebar-nav-item,
+.sidebar.closed .sidebar-chat-item,
+.sidebar.closed .sidebar-seed-item {
+  justify-content: center;
+  padding: 10px;
+}
+
+.sidebar.closed .sidebar-chat-item .pin-icon {
+  position: absolute;
+  top: 4px;
+  right: 4px;
 }
 
 .sidebar.closed .sidebar-header {
@@ -58,7 +75,7 @@
 }
 
 .sidebar.closed #theme-picker-btn {
-  display: none;
+  /* let it show icon */
 }
 
 .sidebar-backdrop {
@@ -210,13 +227,46 @@
   flex-direction: column;
 }
 
-.sidebar-section-label {
+.sidebar-section-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
   padding: 8px 10px 4px;
+}
+
+.sidebar-section-label {
+  padding: 0;
   font-size: 0.7rem;
   font-weight: 700;
   letter-spacing: 0.08em;
   text-transform: uppercase;
   color: var(--text-muted);
+}
+
+.sidebar-sort-controls {
+  display: flex;
+  gap: 4px;
+}
+
+.sidebar-sort-controls button {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 20px;
+  height: 20px;
+  border-radius: 4px;
+  color: var(--text-muted);
+  transition: all var(--transition-fast);
+}
+
+.sidebar-sort-controls button:hover {
+  background: var(--bg-glass-hover);
+  color: var(--text-primary);
+}
+
+.sidebar-sort-controls button.active-sort {
+  background: var(--accent-dim);
+  color: var(--accent);
 }
 
 .sidebar-subsection-label {
@@ -305,6 +355,18 @@
   overflow: hidden;
   text-overflow: ellipsis;
   white-space: nowrap;
+}
+
+.rename-input {
+  flex: 1;
+  min-width: 0;
+  background: var(--bg-glass);
+  border: 1px solid var(--accent);
+  border-radius: 4px;
+  color: var(--text-primary);
+  font-size: 0.82rem;
+  padding: 2px 6px;
+  outline: none;
 }
 
 .pin-icon {

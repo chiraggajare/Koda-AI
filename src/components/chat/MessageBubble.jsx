@@ -1,7 +1,7 @@
 import React, { useState } from 'react';
 import {
   ThumbsUp, ThumbsDown, RotateCcw, Copy, MoreHorizontal,
-  Volume2, Share, Mail, Flag, Check, Zap, Brain, BarChart3,
+  Volume2, VolumeX, Share, Mail, Flag, Check, Zap, Brain, BarChart3,
   Edit2
 } from 'lucide-react';
 import { useChat } from '../../context/ChatContext';
@@ -148,6 +148,9 @@ export default function MessageBubble({ message, conversationId }) {
                   </button>
                   <button onClick={() => { handleListen(); setMoreOpen(false); }}>
                     <Volume2 size={13} /> Listen
+                  </button>
+                  <button onClick={() => { window.speechSynthesis.cancel(); setMoreOpen(false); }}>
+                    <VolumeX size={13} /> Stop Speech
                   </button>
                   <button onClick={() => setMoreOpen(false)}>
                     <Share size={13} /> Export

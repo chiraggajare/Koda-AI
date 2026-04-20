@@ -9,21 +9,20 @@ export function useMouseGradient(containerRef) {
     const el = containerRef?.current || document.body;
 
     const onMove = (e) => {
-      const { innerWidth: w, innerHeight: h } = window;
-      targetRef.current = {
-        x: (e.clientX / w) * 100,
-        y: (e.clientY / h) * 100,
-      };
+      targetRef.current = { x: e.clientX, y: e.clientY };
     };
 
     const animate = () => {
-      // Slightly faster lerp for a better balance of ambient weight and responsiveness
-      posRef.current.x += (targetRef.current.x - posRef.current.x) * 0.017;
-      posRef.current.y += (targetRef.current.y - posRef.current.y) * 0.017;
+      // Lerp for smooth following
+      posRef.current.x += (targetRef.current.x - posRef.current.x) * 0.05;
+      posRef.current.y += (targetRef.current.y - posRef.current.y) * 0.05;
 
       const { x, y } = posRef.current;
-      document.documentElement.style.setProperty('--mouse-x', `${x}%`);
-      document.documentElement.style.setProperty('--mouse-y', `${y}%`);
+
+      const targetEl = containerRef?.current;
+      if (targetEl) {
+        targetEl.style.transform = `translate3d(${x}px, ${y}px, 0) translate(-50%, -50%)`;
+      }
 
       rafRef.current = requestAnimationFrame(animate);
     };

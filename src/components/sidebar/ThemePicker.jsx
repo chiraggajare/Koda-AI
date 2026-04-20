@@ -3,7 +3,7 @@ import { useTheme } from '../../context/ThemeContext';
 import './ThemePicker.css';
 
 export default function ThemePicker() {
-  const { activeTheme, changeTheme, THEMES } = useTheme();
+  const { activeTheme, changeTheme, THEMES, particlesEnabled, toggleParticles } = useTheme();
 
   return (
     <div className="theme-picker">
@@ -28,6 +28,15 @@ export default function ThemePicker() {
             )}
           </button>
         ))}
+      </div>
+      
+      <div className="theme-picker-options">
+        <label className="particles-toggle">
+          <span>Particle Effect</span>
+          <button type="button" className={`toggle-btn ${particlesEnabled ? 'on' : 'off'}`} onClick={toggleParticles}>
+            <div className="toggle-knob" />
+          </button>
+        </label>
       </div>
     </div>
   );

@@ -1,7 +1,11 @@
-import React from 'react';
+import React, { useRef } from 'react';
+import { useMouseGradient } from '../../hooks/useMouseGradient';
 import './BackgroundGradientAnimation.css';
 
 export default function BackgroundGradientAnimation() {
+  const interactiveRef = useRef(null);
+  useMouseGradient(interactiveRef);
+
   return (
     <div className="bg-anim-container">
 
@@ -16,9 +20,10 @@ export default function BackgroundGradientAnimation() {
         <div className="bg-blob blob-2" />
         {/* Orb 3 — accent/warm hue, right-center */}
         <div className="bg-blob blob-3" />
-        {/* Orb 4 — mouse follower */}
-        <div className="bg-blob blob-interactive" />
       </div>
+
+      {/* Orb 4 — mouse follower — outside overflow-offset container for alignment */}
+      <div ref={interactiveRef} className="bg-blob blob-interactive" />
 
       {/* ── Grain noise overlay ───────────────────────────────────
           feTurbulence + desaturate → fine monochrome grain.
