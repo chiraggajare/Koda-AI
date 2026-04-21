@@ -68,6 +68,7 @@ export default function Sidebar({ open, onToggle }) {
   const handleNewChat = () => {
     dispatch({ type: 'NEW_CONVERSATION' });
     navigate('/chat');
+    if (!open) onToggle();
   };
 
   const handleSelectChat = (id) => {
@@ -179,11 +180,11 @@ export default function Sidebar({ open, onToggle }) {
         onDragEnd={handleDragEnd}
         className={`sidebar-chat-item ${isActive ? 'active' : ''} ${selectionMode && selectedChats.includes(conv.id) ? 'selected' : ''} ${draggedChat?.id === conv.id ? 'dragging' : ''}`}
         onClick={(e) => {
-           if (selectionMode) {
-             toggleSelect(e, conv.id);
-             return;
-           }
-           handleSelectChat(conv.id);
+          if (selectionMode) {
+            toggleSelect(e, conv.id);
+            return;
+          }
+          handleSelectChat(conv.id);
         }}
         onPointerDown={() => handlePointerDown(conv.id)}
         onPointerUp={handlePointerUp}
@@ -192,12 +193,12 @@ export default function Sidebar({ open, onToggle }) {
         onMouseLeave={() => { setHoveredChat(null); if (chatMenuOpen === conv.id) setChatMenuOpen(null); }}
       >
         {selectionMode && (
-           <input 
-             type="checkbox" 
-             className="chat-checkbox" 
-             checked={selectedChats.includes(conv.id)}
-             readOnly
-           />
+          <input
+            type="checkbox"
+            className="chat-checkbox"
+            checked={selectedChats.includes(conv.id)}
+            readOnly
+          />
         )}
         {!selectionMode && (
           <div className="chat-drag-handle" style={{ opacity: 0.5, cursor: 'grab', marginRight: '6px', display: 'flex', alignItems: 'center' }}>
@@ -233,8 +234,8 @@ export default function Sidebar({ open, onToggle }) {
           <div className="chat-context-menu anim-scale-in">
             <button onClick={e => handleRenameClick(e, conv.id, conv.title)}>Rename</button>
             <button onClick={e => handlePin(e, conv.id)}>{conv.pinned ? 'Unpin' : 'Pin'}</button>
-            {!conv.pinned && <button onClick={e => handleMove(e, conv.id, -1)}><ArrowUp size={12} style={{marginRight: '6px'}}/> Move Up</button>}
-            {!conv.pinned && <button onClick={e => handleMove(e, conv.id, 1)}><ArrowDown size={12} style={{marginRight: '6px'}}/> Move Down</button>}
+            {!conv.pinned && <button onClick={e => handleMove(e, conv.id, -1)}><ArrowUp size={12} style={{ marginRight: '6px' }} /> Move Up</button>}
+            {!conv.pinned && <button onClick={e => handleMove(e, conv.id, 1)}><ArrowDown size={12} style={{ marginRight: '6px' }} /> Move Down</button>}
             <button className="danger" onClick={e => handleDelete(e, conv.id)}>Delete</button>
           </div>
         )}
@@ -289,7 +290,7 @@ export default function Sidebar({ open, onToggle }) {
           {/* My Inventory */}
           <button
             className={`sidebar-nav-item ${location.pathname === '/inventory' ? 'active' : ''}`}
-            onClick={() => navigate('/inventory')}
+            onClick={() => { navigate('/inventory'); if (!open) onToggle(); }}
             title="My Inventory"
           >
             <Package size={16} /> <span>My Inventory</span>
@@ -299,7 +300,7 @@ export default function Sidebar({ open, onToggle }) {
           <div className="sidebar-section">
             <button
               className={`sidebar-nav-item ${location.pathname.startsWith('/seeds') ? 'active' : ''}`}
-              onClick={() => navigate('/seeds')}
+              onClick={() => { navigate('/seeds'); if (!open) onToggle(); }}
               id="seeds-nav-btn"
               title="Seeds"
             >
@@ -360,9 +361,9 @@ export default function Sidebar({ open, onToggle }) {
                   <button onClick={() => { setSelectionMode(false); setSelectedChats([]); }} style={{ color: 'var(--text-muted)', fontSize: '0.75rem', background: 'none', border: 'none', cursor: 'pointer' }}>Cancel</button>
                   <span style={{ fontSize: '0.75rem', color: 'var(--text-primary)', fontWeight: 'bold' }}>{selectedChats.length} Selected</span>
                   <button style={{ color: '#ff5555', fontSize: '0.75rem', fontWeight: 'bold', background: 'none', border: 'none', cursor: 'pointer' }} onClick={() => {
-                      selectedChats.forEach(id => dispatch({ type: 'DELETE_CONVERSATION', payload: id }));
-                      setSelectionMode(false);
-                      setSelectedChats([]);
+                    selectedChats.forEach(id => dispatch({ type: 'DELETE_CONVERSATION', payload: id }));
+                    setSelectionMode(false);
+                    setSelectedChats([]);
                   }}>Delete</button>
                 </div>
               )}
@@ -385,10 +386,17 @@ export default function Sidebar({ open, onToggle }) {
         </div>
 
         <div className="sidebar-footer">
+          {showThemePicker && (
+            <div 
+              style={{ position: 'fixed', top: 0, left: 0, width: '100vw', height: '100vh', zIndex: 9998, background: 'transparent' }} 
+              onClick={() => setShowThemePicker(false)} 
+            />
+          )}
           {/* Theme picker toggle */}
           <button
             className={`sidebar-nav-item ${showThemePicker ? 'active' : ''}`}
-            onClick={() => setShowThemePicker(p => !p)}
+            onClick={() => { setShowThemePicker(p => !p); if (!open) onToggle(); }}
+            style={{ position: 'relative', zIndex: 9999 }}
             id="theme-picker-btn"
             title="Theme"
           >
@@ -397,7 +405,7 @@ export default function Sidebar({ open, onToggle }) {
           </button>
 
           {open && showThemePicker && (
-            <div className="anim-slide-up">
+            <div className="anim-slide-up" style={{ position: 'relative', zIndex: 9999 }}>
               <ThemePicker />
             </div>
           )}
@@ -405,7 +413,7 @@ export default function Sidebar({ open, onToggle }) {
           {/* Settings */}
           <button
             className={`sidebar-nav-item ${location.pathname === '/settings' ? 'active' : ''}`}
-            onClick={() => navigate('/settings')}
+            onClick={() => { navigate('/settings'); if (!open) onToggle(); }}
             id="settings-nav-btn"
             title="Settings & Help"
           >

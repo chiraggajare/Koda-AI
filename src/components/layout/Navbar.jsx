@@ -11,13 +11,7 @@ export default function Navbar({ variant = 'landing' }) {
   const [profileOpen, setProfileOpen] = useState(false);
   const [chatMenuOpen, setChatMenuOpen] = useState(false);
 
-  const handleRename = () => {
-    const t = prompt('Rename chat:', activeConversation?.title);
-    if (t && activeConversation) {
-      dispatch({ type: 'RENAME_CONVERSATION', payload: { conversationId: activeConversation.id, title: t } });
-    }
-    setChatMenuOpen(false);
-  };
+
 
   const handleDelete = () => {
     if (activeConversation && confirm('Delete this chat?')) {
@@ -65,28 +59,34 @@ export default function Navbar({ variant = 'landing' }) {
             </button>
           )}
 
-          {variant === 'chat' && (
+          {variant === 'chat' && !isEmptyChat && (
             <>
               <button className="pill-btn" id="share-btn" title="Share">
                 <Share2 size={13} /> Share
               </button>
               <div className="navbar-menu-wrap">
+                {chatMenuOpen && (
+                  <div 
+                    style={{ position: 'fixed', top: 0, left: 0, width: '100vw', height: '100vh', zIndex: 9998, background: 'transparent' }} 
+                    onClick={() => setChatMenuOpen(false)} 
+                  />
+                )}
                 <button
                   className={`icon-btn ${chatMenuOpen ? 'active-icon' : ''}`}
                   onClick={() => setChatMenuOpen(o => !o)}
+                  style={{ position: 'relative', zIndex: 9999 }}
                   id="chat-options-btn"
                 >
                   <MoreHorizontal size={18} />
                 </button>
                 {chatMenuOpen && (
-                  <div className="navbar-dropdown anim-scale-in">
+                  <div className="navbar-dropdown anim-scale-in" style={{ zIndex: 9999 }}>
                     <button onClick={handlePin}>
                       <Pin size={14} />
                       {activeConversation?.pinned ? 'Unpin' : 'Pin'}
                     </button>
-                    <button onClick={handleRename}>
-                      <Edit2 size={14} /> Rename
-                    </button>
+
+
                     <button className="danger" onClick={handleDelete}>
                       <Trash2 size={14} /> Delete
                     </button>
