@@ -1,7 +1,7 @@
 import React, { useState, useRef } from 'react';
 import { useNavigate, useLocation } from 'react-router-dom';
 import {
-  Menu, Search, Plus, Package, Sprout, MessageSquare,
+  Menu, Search, Plus, Package, Sprout, MessageSquare, FolderTree,
   Settings, ChevronRight, Pin, MoreHorizontal, X,
   Palette, ChevronDown, Clock, Type, GripVertical, ArrowUp, ArrowDown
 } from 'lucide-react';
@@ -287,13 +287,21 @@ export default function Sidebar({ open, onToggle }) {
         )}
 
         <div className="sidebar-nav">
-          {/* My Inventory */}
           <button
             className={`sidebar-nav-item ${location.pathname === '/inventory' ? 'active' : ''}`}
             onClick={() => { navigate('/inventory'); if (!open) onToggle(); }}
             title="My Inventory"
           >
             <Package size={16} /> <span>My Inventory</span>
+          </button>
+
+          {/* Explorer */}
+          <button
+            className={`sidebar-nav-item ${location.pathname === '/explorer' ? 'active' : ''}`}
+            onClick={() => { navigate('/explorer'); if (!open) onToggle(); }}
+            title="Explorer"
+          >
+            <FolderTree size={16} /> <span>Explorer</span>
           </button>
 
           {/* Seeds */}
