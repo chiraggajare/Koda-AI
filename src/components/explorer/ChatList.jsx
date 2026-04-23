@@ -191,11 +191,15 @@ const GridCard = ({ item, sq, getPathStr, allFolders, index }) => {
       ].join(' ')}
       style={{ ...style, zIndex: menuOpen ? 1000 : (isDragging ? 500 : 1) }}
       onClick={handleSelect}
-      onPointerDown={handlePointerDown}
+      onPointerDown={(e) => {
+        handlePointerDown(e);
+        listeners?.onPointerDown?.(e);
+      }}
       onPointerMove={handlePointerMove}
       onPointerUp={handlePointerUp}
       {...attributes}
-      {...listeners}
+      onKeyDown={listeners?.onKeyDown}
+      onKeyUp={listeners?.onKeyUp}
     >
       {/* Checkbox */}
       {ixState.isCheckboxMode && (

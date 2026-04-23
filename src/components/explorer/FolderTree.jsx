@@ -169,11 +169,15 @@ const TreeNode = ({ node, level, hoveredFolderId, index }) => {
         style={{ paddingLeft: `${Math.min(level * 20 + 10, 200)}px` }}
         onClick={handleSelect}
         onDoubleClick={() => !ixState.isCheckboxMode && setRenaming(true)}
-        onPointerDown={handlePointerDown}
+        onPointerDown={(e) => {
+          handlePointerDown(e);
+          listeners?.onPointerDown?.(e);
+        }}
         onPointerMove={handlePointerMove}
         onPointerUp={handlePointerUp}
         {...(!renaming ? attributes : {})}
-        {...(!renaming ? listeners : {})}
+        onKeyDown={!renaming ? listeners?.onKeyDown : undefined}
+        onKeyUp={!renaming ? listeners?.onKeyUp : undefined}
       >
         {/* Checkbox */}
         {ixState.isCheckboxMode && (
