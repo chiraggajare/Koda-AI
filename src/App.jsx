@@ -3,6 +3,7 @@ import { BrowserRouter, Routes, Route, Navigate } from 'react-router-dom';
 import { ChatProvider } from './context/ChatContext';
 import { ThemeProvider } from './context/ThemeContext';
 import { ExplorerProvider } from './context/ExplorerContext';
+import { InteractionProvider } from './context/InteractionContext';
 import Layout from './components/layout/Layout';
 import LandingPage from './components/pages/LandingPage';
 import ChatPage from './components/pages/ChatPage';
@@ -17,6 +18,7 @@ export default function App() {
   return (
     <ThemeProvider>
       <ExplorerProvider>
+        <InteractionProvider>
         <ChatProvider>
           <BrowserRouter>
             <Layout>
@@ -34,6 +36,7 @@ export default function App() {
             </Layout>
           </BrowserRouter>
         </ChatProvider>
+        </InteractionProvider>
       </ExplorerProvider>
     </ThemeProvider>
   );

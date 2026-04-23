@@ -1,10 +1,19 @@
 import React, { useRef } from 'react';
 import { useMouseGradient } from '../../hooks/useMouseGradient';
+import { useLocation } from 'react-router-dom';
+import { useChat } from '../../context/ChatContext';
 import './BackgroundGradientAnimation.css';
 
 export default function BackgroundGradientAnimation() {
   const interactiveRef = useRef(null);
-  useMouseGradient(interactiveRef);
+  const { activeConversation } = useChat();
+  const location = useLocation();
+  
+  const isTrueLanding = location.pathname === '/';
+  const isEmptyChat = location.pathname === '/chat' && (!activeConversation || activeConversation.messages.length === 0);
+  const isLanding = isTrueLanding || isEmptyChat;
+
+  useMouseGradient(interactiveRef, isLanding);
 
   return (
     <div className="bg-anim-container">
@@ -22,8 +31,12 @@ export default function BackgroundGradientAnimation() {
         <div className="bg-blob blob-3" />
       </div>
 
-      {/* Orb 4 — mouse follower — outside overflow-offset container for alignment */}
-      <div ref={interactiveRef} className="bg-blob blob-interactive" />
+      {/* Orb 4 — mouse follower — Active only on Landing Page */}
+      <div
+        ref={interactiveRef}
+        className="bg-blob blob-interactive"
+        style={{ display: isLanding ? 'block' : 'none' }}
+      />
 
       {/* ── Grain noise overlay ───────────────────────────────────
           feTurbulence + desaturate → fine monochrome grain.

@@ -10,7 +10,8 @@ const initialState = {
   expandedFolderIds: ['root'],
   searchQuery: '',
   selectedItemIds: [],
-  lastSelectedItemId: null
+  lastSelectedItemId: null,
+  editingId: null
 };
 
 function explorerReducer(state, action) {
@@ -26,14 +27,18 @@ function explorerReducer(state, action) {
       return {
         ...state,
         tree: [...state.tree, newFolder],
-        expandedFolderIds: Array.from(new Set([...state.expandedFolderIds, parentId || 'root']))
+        expandedFolderIds: Array.from(new Set([...state.expandedFolderIds, parentId || 'root'])),
+        editingId: newFolder.id
       };
     }
+    case 'SET_EDITING_ID':
+      return { ...state, editingId: action.payload };
     case 'RENAME_NODE': {
       const { id, name } = action.payload;
       return {
         ...state,
-        tree: state.tree.map(node => node.id === id ? { ...node, name } : node)
+        tree: state.tree.map(node => node.id === id ? { ...node, name } : node),
+        editingId: null
       };
     }
     case 'DELETE_ITEMS': {
@@ -77,6 +82,15 @@ function explorerReducer(state, action) {
         selectedFolderId: newSelectedFolder,
         selectedItemIds: [],
         lastSelectedItemId: null
+      };
+    }
+    case 'RESTORE_NODES': {
+      const { nodes } = action.payload;
+      const existingIds = new Set(state.tree.map(n => n.id));
+      const nodesToAdd = nodes.filter(n => !existingIds.has(n.id));
+      return {
+        ...state,
+        tree: [...state.tree, ...nodesToAdd]
       };
     }
     case 'MOVE_ITEMS': {
@@ -254,4 +268,16 @@ export const useExplorer = () => {
   const ctx = useContext(ExplorerContext);
   if (!ctx) throw new Error('useExplorer must be used within ExplorerProvider');
   return ctx;
+};
+
+export const getSubtree = (tree, rootIds) => {
+  const ids = new Set(rootIds);
+  let size;
+  do {
+    size = ids.size;
+    tree.forEach(n => {
+      if (ids.has(n.parentId)) ids.add(n.id);
+    });
+  } while (ids.size > size);
+  return tree.filter(n => ids.has(n.id));
 };

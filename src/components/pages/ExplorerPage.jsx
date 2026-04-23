@@ -1,28 +1,30 @@
-import React, { useEffect, useState, useRef } from 'react';
+import React, { useEffect, useState, useRef, useCallback } from 'react';
 import FolderTree from '../explorer/FolderTree';
 import ChatList from '../explorer/ChatList';
 import Breadcrumbs from '../explorer/Breadcrumbs';
-import { useExplorer } from '../../context/ExplorerContext';
+import { useExplorer, getSubtree } from '../../context/ExplorerContext';
 import { useChat } from '../../context/ChatContext';
-import { 
-  DndContext, 
-  DragOverlay, 
-  closestCenter, 
-  KeyboardSensor, 
-  PointerSensor, 
-  useSensor, 
+import { useInteraction } from '../../context/InteractionContext';
+import { SelectionBadge, DragGhost, BinDropZone, UndoToast, CheckboxActionBar } from '../explorer/Overlays';
+import {
+  DndContext,
+  DragOverlay,
+  closestCenter,
+  KeyboardSensor,
+  PointerSensor,
+  useSensor,
   useSensors,
   pointerWithin,
   rectIntersection,
-  getFirstCollision
 } from '@dnd-kit/core';
 import { sortableKeyboardCoordinates } from '@dnd-kit/sortable';
 import '../explorer/Explorer.css';
 
 export default function ExplorerPage() {
   const { state: explorerState, dispatch } = useExplorer();
-  const { state: chatState } = useChat();
-  
+  const { state: chatState, dispatch: chatDispatch } = useChat();
+  const { state: ixState, dispatch: ixDispatch } = useInteraction();
+
   const [activeId, setActiveId] = useState(null);
   const [activeItems, setActiveItems] = useState([]);
   const [hoveredFolderId, setHoveredFolderId] = useState(null);
@@ -33,11 +35,17 @@ export default function ExplorerPage() {
     dispatch({ type: 'SYNC_CHATS', payload: { chats: chatState.conversations } });
   }, [chatState.conversations, dispatch]);
 
+  // Click-outside clears selection
+  const handlePageClick = useCallback((e) => {
+    const isRow = e.target.closest('.tree-node, .chat-card');
+    if (!isRow) {
+      ixDispatch({ type: 'CLEAR_SELECTION' });
+    }
+  }, [ixDispatch]);
+
   const sensors = useSensors(
     useSensor(PointerSensor, {
-      activationConstraint: {
-        distance: 5, // 5px movement before drag starts, allows clicking
-      },
+      activationConstraint: { distance: 5 },
     }),
     useSensor(KeyboardSensor, {
       coordinateGetter: sortableKeyboardCoordinates,
@@ -47,14 +55,21 @@ export default function ExplorerPage() {
   const handleDragStart = (event) => {
     const { active } = event;
     setActiveId(active.id);
-    
-    // Determine items being dragged (include multi-select if active is selected)
-    if (explorerState.selectedItemIds.includes(active.id)) {
-      setActiveItems(explorerState.tree.filter(n => explorerState.selectedItemIds.includes(n.id)));
+    const selSet = ixState.selectedItems;
+
+    let items;
+    if (selSet.has(active.id) && selSet.size > 0) {
+      items = explorerState.tree.filter(n => selSet.has(n.id));
     } else {
-      const activeNode = explorerState.tree.find(n => n.id === active.id);
-      setActiveItems(activeNode ? [activeNode] : []);
+      const node = explorerState.tree.find(n => n.id === active.id);
+      items = node ? [node] : [];
     }
+
+    setActiveItems(items);
+    const src = active.data.current?.type === 'folder' && !selSet.has(active.id)
+      ? 'folder-reorder'
+      : 'selection';
+    ixDispatch({ type: 'SET_DRAG_START', payload: src });
   };
 
   const handleDragOver = (event) => {
@@ -64,14 +79,9 @@ export default function ExplorerPage() {
       if (expandTimeoutRef.current) clearTimeout(expandTimeoutRef.current);
       return;
     }
-
     const overData = over.data.current;
-    
-    // Check if hovering over a folder (not self or descendant handled in reducer, but visually helpful)
     if (overData?.type === 'folder' && over.id !== activeId) {
       setHoveredFolderId(over.id);
-      
-      // Auto-expand folder on hover
       if (expandTimeoutRef.current) clearTimeout(expandTimeoutRef.current);
       expandTimeoutRef.current = setTimeout(() => {
         if (!explorerState.expandedFolderIds.includes(over.id)) {
@@ -86,66 +96,120 @@ export default function ExplorerPage() {
 
   const handleDragEnd = (event) => {
     const { active, over } = event;
-    
     setActiveId(null);
     setActiveItems([]);
     setHoveredFolderId(null);
+    ixDispatch({ type: 'SET_DRAG_END' });
     if (expandTimeoutRef.current) clearTimeout(expandTimeoutRef.current);
-
     if (!over) return;
 
-    const overData = over.data.current;
-    const activeData = active.data.current;
-
-    const itemsToMove = explorerState.selectedItemIds.includes(active.id) 
-      ? explorerState.selectedItemIds 
+    const selSet = ixState.selectedItems;
+    const itemsToMove = selSet.has(active.id) && selSet.size > 0
+      ? Array.from(selSet)
       : [active.id];
 
-    // Did we drop ONTO a folder to move? (Different parent or explicit move target)
-    // Custom collision/logic: if dropping on a folder, move it there. 
-    // Except if dropping between items in the same container.
     if (hoveredFolderId && hoveredFolderId === over.id) {
-       dispatch({ type: 'MOVE_ITEMS', payload: { itemIds: itemsToMove, targetFolderId: hoveredFolderId } });
-       return;
+      const prevParents = itemsToMove.map(id => ({
+        id,
+        prevParentId: explorerState.tree.find(n => n.id === id)?.parentId,
+      }));
+      dispatch({ type: 'MOVE_ITEMS', payload: { itemIds: itemsToMove, targetFolderId: hoveredFolderId } });
+      ixDispatch({
+        type: 'SHOW_TOAST',
+        payload: {
+          message: `Moved ${itemsToMove.length} item${itemsToMove.length > 1 ? 's' : ''}`,
+          undoType: 'UNDO_MOVE',
+          undoPayload: prevParents,
+        },
+      });
+      return;
     }
 
-    // Otherwise, standard reorder within the same container
     if (active.id !== over.id && itemsToMove.length === 1) {
-       // Reorder
-       dispatch({ type: 'REORDER_ITEMS', payload: { activeId: active.id, overId: over.id } });
+      dispatch({ type: 'REORDER_ITEMS', payload: { activeId: active.id, overId: over.id } });
+      ixDispatch({
+        type: 'SHOW_TOAST',
+        payload: { message: 'Item reordered', undoType: 'UNDO_REORDER', undoPayload: { activeId: active.id, overId: over.id } },
+      });
     }
   };
 
-  // Custom collision detection strategy
+  const handleDeleteDrop = useCallback(() => {
+    const selSet = ixState.selectedItems;
+    const ids = selSet.size > 0 ? Array.from(selSet) : activeItems.map(i => i.id);
+    if (ids.length === 0) return;
+
+    // Capture nodes for undo
+    const deletedNodes = getSubtree(explorerState.tree, ids);
+
+    dispatch({ type: 'DELETE_ITEMS', payload: { itemIds: ids, moveChildrenToParent: false } });
+    ixDispatch({ type: 'CLEAR_SELECTION' });
+    ixDispatch({ type: 'SET_DRAG_END' });
+    ixDispatch({
+      type: 'SHOW_TOAST',
+      payload: { 
+        message: `${ids.length} item${ids.length > 1 ? 's' : ''} deleted`, 
+        undoType: 'UNDO_DELETE', 
+        undoPayload: { nodes: deletedNodes } 
+      },
+    });
+  }, [ixState.selectedItems, activeItems, explorerState.tree, dispatch, ixDispatch]);
+
+  const handleUndo = useCallback(() => {
+    const top = ixState.undoStack[0];
+    if (!top) return;
+    if (top.type === 'UNDO_MOVE') {
+      top.payload.forEach(({ id, prevParentId }) => {
+        if (prevParentId) dispatch({ type: 'MOVE_ITEMS', payload: { itemIds: [id], targetFolderId: prevParentId } });
+      });
+    } else if (top.type === 'UNDO_REORDER') {
+      dispatch({ type: 'REORDER_ITEMS', payload: { activeId: top.payload.overId, overId: top.payload.activeId } });
+    } else if (top.type === 'UNDO_DELETE') {
+      dispatch({ type: 'RESTORE_NODES', payload: { nodes: top.payload.nodes } });
+    }
+  }, [ixState.undoStack, dispatch]);
+
+  const handleCheckboxDelete = useCallback(() => {
+    const ids = Array.from(ixState.checkedItems);
+    if (ids.length === 0) return;
+    
+    const deletedNodes = getSubtree(explorerState.tree, ids);
+
+    dispatch({ type: 'DELETE_ITEMS', payload: { itemIds: ids, moveChildrenToParent: false } });
+    ixDispatch({ type: 'EXIT_CHECKBOX_MODE' });
+    ixDispatch({
+      type: 'SHOW_TOAST',
+      payload: { 
+        message: `${ids.length} item${ids.length > 1 ? 's' : ''} deleted`, 
+        undoType: 'UNDO_DELETE', 
+        undoPayload: { nodes: deletedNodes } 
+      },
+    });
+  }, [ixState.checkedItems, explorerState.tree, dispatch, ixDispatch]);
+
   const customCollisionDetection = (args) => {
-    // First, let's see if we are dropping directly ON a folder (pointer exact)
     const pointerCollisions = pointerWithin(args);
     const folderCollisions = pointerCollisions.filter(c => c.data?.current?.type === 'folder');
-    
-    if (folderCollisions.length > 0) {
-      return folderCollisions; // Prioritize dropping INTO a folder
-    }
-
-    // Fallback to rect intersection for sorting
+    if (folderCollisions.length > 0) return folderCollisions;
     return rectIntersection(args);
   };
 
   return (
-    <DndContext 
+    <DndContext
       sensors={sensors}
       collisionDetection={customCollisionDetection}
       onDragStart={handleDragStart}
       onDragOver={handleDragOver}
       onDragEnd={handleDragEnd}
     >
-      <div className="explorer-page-wrapper">
+      <div className="explorer-page-wrapper" onClick={handlePageClick}>
         <Breadcrumbs />
         <div className="explorer-main-area">
           <FolderTree hoveredFolderId={hoveredFolderId} />
           <ChatList hoveredFolderId={hoveredFolderId} />
         </div>
       </div>
-      
+
       <DragOverlay dropAnimation={null}>
         {activeId && activeItems.length > 0 ? (
           <div className="drag-overlay-badge">
@@ -154,6 +218,13 @@ export default function ExplorerPage() {
           </div>
         ) : null}
       </DragOverlay>
+
+      {/* Global overlays */}
+      <SelectionBadge />
+      <DragGhost items={activeItems} visible={ixState.isDragging} />
+      <BinDropZone onDrop={handleDeleteDrop} />
+      <UndoToast onUndo={handleUndo} />
+      <CheckboxActionBar onDelete={handleCheckboxDelete} />
     </DndContext>
   );
 }

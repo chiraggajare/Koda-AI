@@ -1,11 +1,12 @@
 import { useEffect, useRef } from 'react';
 
-export function useMouseGradient(containerRef) {
-  const posRef = useRef({ x: 50, y: 50 });
-  const targetRef = useRef({ x: 50, y: 50 });
+export function useMouseGradient(containerRef, enabled = true) {
+  const posRef = useRef({ x: window.innerWidth / 2, y: window.innerHeight / 2 });
+  const targetRef = useRef({ x: window.innerWidth / 2, y: window.innerHeight / 2 });
   const rafRef = useRef(null);
 
   useEffect(() => {
+    if (!enabled) return;
     const el = containerRef?.current || document.body;
 
     const onMove = (e) => {
@@ -13,9 +14,9 @@ export function useMouseGradient(containerRef) {
     };
 
     const animate = () => {
-      // Lerp for smooth following
-      posRef.current.x += (targetRef.current.x - posRef.current.x) * 0.05;
-      posRef.current.y += (targetRef.current.y - posRef.current.y) * 0.05;
+      // Lerp for smooth following with a slight delay
+      posRef.current.x += (targetRef.current.x - posRef.current.x) * 0.035;
+      posRef.current.y += (targetRef.current.y - posRef.current.y) * 0.035;
 
       const { x, y } = posRef.current;
 
@@ -34,5 +35,5 @@ export function useMouseGradient(containerRef) {
       window.removeEventListener('mousemove', onMove);
       if (rafRef.current) cancelAnimationFrame(rafRef.current);
     };
-  }, []);
+  }, [enabled, containerRef]);
 }
