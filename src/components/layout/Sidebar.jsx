@@ -1,5 +1,6 @@
 import React, { useState, useRef } from 'react';
 import { useNavigate, useLocation } from 'react-router-dom';
+import { createPortal } from 'react-dom';
 import {
   Menu, Search, Plus, Package, Sprout, MessageSquare, FolderTree,
   Settings, ChevronRight, Pin, MoreHorizontal, X,
@@ -22,6 +23,8 @@ export default function Sidebar({ open, onToggle }) {
   const [hoveredChat, setHoveredChat] = useState(null);
   const [chatMenuOpen, setChatMenuOpen] = useState(null);
   const [seedsExpanded, setSeedsExpanded] = useState(true);
+  const [tooltip, setTooltip] = useState(null);
+  const tooltipTimeout = useRef(null);
 
   const [renamingId, setRenamingId] = useState(null);
   const [renameValue, setRenameValue] = useState('');
@@ -189,8 +192,25 @@ export default function Sidebar({ open, onToggle }) {
         onPointerDown={() => handlePointerDown(conv.id)}
         onPointerUp={handlePointerUp}
         onPointerLeave={handlePointerUp}
-        onMouseEnter={() => setHoveredChat(conv.id)}
-        onMouseLeave={() => { setHoveredChat(null); if (chatMenuOpen === conv.id) setChatMenuOpen(null); }}
+        onMouseEnter={(e) => {
+          setHoveredChat(conv.id);
+          const itemEl = e.currentTarget;
+          const titleEl = itemEl.querySelector('.chat-title');
+          const isTruncated = titleEl ? titleEl.scrollWidth > titleEl.clientWidth : false;
+
+          if (isTruncated) {
+            const rect = itemEl.getBoundingClientRect();
+            tooltipTimeout.current = setTimeout(() => {
+              setTooltip({ text: conv.title, top: rect.top + rect.height / 2, left: rect.right + 10 });
+            }, 150);
+          }
+        }}
+        onMouseLeave={() => { 
+          setHoveredChat(null); 
+          if (tooltipTimeout.current) clearTimeout(tooltipTimeout.current);
+          setTooltip(null);
+          if (chatMenuOpen === conv.id) setChatMenuOpen(null); 
+        }}
       >
         {selectionMode && (
           <input
@@ -287,21 +307,13 @@ export default function Sidebar({ open, onToggle }) {
         )}
 
         <div className="sidebar-nav">
-          <button
-            className={`sidebar-nav-item ${location.pathname === '/inventory' ? 'active' : ''}`}
-            onClick={() => { navigate('/inventory'); if (!open) onToggle(); }}
-            title="My Inventory"
-          >
-            <Package size={16} /> <span>My Inventory</span>
-          </button>
-
           {/* Explorer */}
           <button
             className={`sidebar-nav-item ${location.pathname === '/explorer' ? 'active' : ''}`}
             onClick={() => { navigate('/explorer'); if (!open) onToggle(); }}
-            title="Explorer"
+            title="My Garden"
           >
-            <FolderTree size={16} /> <span>Explorer</span>
+            <FolderTree size={16} /> <span>My Garden</span>
           </button>
 
           {/* Seeds */}
@@ -324,7 +336,7 @@ export default function Sidebar({ open, onToggle }) {
             </button>
 
             {open && seedsExpanded && state.seeds.length > 0 && (
-              <div className="sidebar-seeds-list anim-fade-in">
+              <div className="sidebar-seeds-list anim-fade-in" style={{ maxHeight: '150px', overflowY: 'auto' }}>
                 {state.seeds.map(seed => (
                   <button
                     key={seed.id}
@@ -376,28 +388,45 @@ export default function Sidebar({ open, onToggle }) {
                 </div>
               )}
 
-              {pinned.length > 0 && (
-                <>
-                  <div className="sidebar-subsection-label"><Pin size={10} /> Pinned</div>
-                  {pinned.map(renderChatItem)}
-                </>
-              )}
-
-              <div className="sidebar-chat-list">
-                {unpinned.length === 0 && pinned.length === 0 && (
-                  <div className="sidebar-empty">No chats yet</div>
+              {/* Scrollable Chat List */}
+              <div 
+                className="sidebar-chat-scroll-area"
+                onScroll={() => {
+                  if (tooltipTimeout.current) clearTimeout(tooltipTimeout.current);
+                  setTooltip(null);
+                }}
+              >
+                {pinned.length > 0 && (
+                  <>
+                    <div className="sidebar-subsection-label"><Pin size={10} /> Pinned</div>
+                    {pinned.map(renderChatItem)}
+                  </>
                 )}
-                {unpinned.map(renderChatItem)}
+
+                <div className="sidebar-chat-list">
+                  {unpinned.length === 0 && pinned.length === 0 && (
+                    <div className="sidebar-empty">No chats yet</div>
+                  )}
+                  {unpinned.map(renderChatItem)}
+                </div>
               </div>
             </>
           )}
         </div>
 
         <div className="sidebar-footer">
+          <button
+            className={`sidebar-nav-item ${location.pathname === '/inventory' ? 'active' : ''}`}
+            onClick={() => { navigate('/inventory'); if (!open) onToggle(); }}
+            title="My Inventory"
+          >
+            <Package size={16} /> <span>My Inventory</span>
+          </button>
+
           {showThemePicker && (
-            <div 
-              style={{ position: 'fixed', top: 0, left: 0, width: '100vw', height: '100vh', zIndex: 9998, background: 'transparent' }} 
-              onClick={() => setShowThemePicker(false)} 
+            <div
+              style={{ position: 'fixed', top: 0, left: 0, width: '100vw', height: '100vh', zIndex: 9998, background: 'transparent' }}
+              onClick={() => setShowThemePicker(false)}
             />
           )}
           {/* Theme picker toggle */}
@@ -429,6 +458,19 @@ export default function Sidebar({ open, onToggle }) {
           </button>
         </div>
       </aside>
+      
+      {tooltip && createPortal(
+        <div 
+          className="sidebar-chat-tooltip"
+          style={{ 
+            top: tooltip.top, 
+            left: tooltip.left,
+          }}
+        >
+          {tooltip.text}
+        </div>,
+        document.body
+      )}
     </>
   );
 }

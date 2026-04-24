@@ -2,18 +2,24 @@ import React, { useRef } from 'react';
 import { useMouseGradient } from '../../hooks/useMouseGradient';
 import { useLocation } from 'react-router-dom';
 import { useChat } from '../../context/ChatContext';
+import { useTheme } from '../../context/ThemeContext';
 import './BackgroundGradientAnimation.css';
 
 export default function BackgroundGradientAnimation() {
   const interactiveRef = useRef(null);
   const { activeConversation } = useChat();
+  const { gradientEnabled } = useTheme();
   const location = useLocation();
   
   const isTrueLanding = location.pathname === '/';
   const isEmptyChat = location.pathname === '/chat' && (!activeConversation || activeConversation.messages.length === 0);
   const isLanding = isTrueLanding || isEmptyChat;
 
-  useMouseGradient(interactiveRef, isLanding);
+  useMouseGradient(interactiveRef, isLanding && gradientEnabled);
+
+  if (!gradientEnabled) {
+    return null;
+  }
 
   return (
     <div className="bg-anim-container">

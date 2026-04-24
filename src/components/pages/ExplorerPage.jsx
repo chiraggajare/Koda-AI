@@ -2,6 +2,7 @@ import React, { useEffect, useState, useRef, useCallback } from 'react';
 import FolderTree from '../explorer/FolderTree';
 import ChatList from '../explorer/ChatList';
 import Breadcrumbs from '../explorer/Breadcrumbs';
+import PreviewModal from '../explorer/PreviewModal';
 import { useExplorer, getSubtree } from '../../context/ExplorerContext';
 import { useChat } from '../../context/ChatContext';
 import { useInteraction } from '../../context/InteractionContext';
@@ -28,6 +29,7 @@ export default function ExplorerPage() {
   const [activeId, setActiveId] = useState(null);
   const [activeItems, setActiveItems] = useState([]);
   const [hoveredFolderId, setHoveredFolderId] = useState(null);
+  const [previewItem, setPreviewItem] = useState(null);
   const expandTimeoutRef = useRef(null);
 
   // Sync chats on mount and when conversations change
@@ -205,10 +207,14 @@ export default function ExplorerPage() {
       <div className="explorer-page-wrapper" onClick={handlePageClick}>
         <Breadcrumbs />
         <div className="explorer-main-area">
-          <FolderTree hoveredFolderId={hoveredFolderId} />
-          <ChatList hoveredFolderId={hoveredFolderId} />
+          <FolderTree hoveredFolderId={hoveredFolderId} onPreview={setPreviewItem} />
+          <ChatList hoveredFolderId={hoveredFolderId} onPreview={setPreviewItem} />
         </div>
       </div>
+
+      {previewItem && (
+        <PreviewModal item={previewItem} onClose={() => setPreviewItem(null)} />
+      )}
 
       <DragOverlay dropAnimation={null}>
         {activeId && activeItems.length > 0 ? (

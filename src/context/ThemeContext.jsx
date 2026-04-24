@@ -21,6 +21,11 @@ export function ThemeProvider({ children }) {
     return saved !== 'false';
   });
 
+  const [gradientEnabled, setGradientEnabled] = useState(() => {
+    const saved = localStorage.getItem('koda_gradient');
+    return saved !== 'false';
+  });
+
   useEffect(() => {
     document.documentElement.setAttribute('data-theme', activeTheme === 'midnight' ? '' : activeTheme);
     localStorage.setItem('koda_theme', activeTheme);
@@ -30,6 +35,10 @@ export function ThemeProvider({ children }) {
     localStorage.setItem('koda_particles', particlesEnabled);
   }, [particlesEnabled]);
 
+  useEffect(() => {
+    localStorage.setItem('koda_gradient', gradientEnabled);
+  }, [gradientEnabled]);
+
   const changeTheme = (themeId) => {
     setActiveTheme(themeId);
   };
@@ -38,8 +47,12 @@ export function ThemeProvider({ children }) {
     setParticlesEnabled(p => !p);
   };
 
+  const toggleGradient = () => {
+    setGradientEnabled(p => !p);
+  };
+
   return (
-    <ThemeContext.Provider value={{ activeTheme, changeTheme, THEMES, particlesEnabled, toggleParticles }}>
+    <ThemeContext.Provider value={{ activeTheme, changeTheme, THEMES, particlesEnabled, toggleParticles, gradientEnabled, toggleGradient }}>
       {children}
     </ThemeContext.Provider>
   );

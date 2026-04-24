@@ -1,9 +1,10 @@
 import React, { useState, useRef, useEffect } from 'react';
+import { createPortal } from 'react-dom';
 import { useExplorer, getSubtree } from '../../context/ExplorerContext';
 import { useInteraction } from '../../context/InteractionContext';
 import {
   Folder, FolderOpen, MoreHorizontal, ChevronRight, ChevronDown,
-  Plus, Edit2, Trash2, FolderPlus, GripVertical
+  Plus, Edit2, Trash2, FolderPlus, GripVertical, Info
 } from 'lucide-react';
 import { useSortable, SortableContext, verticalListSortingStrategy } from '@dnd-kit/sortable';
 import { CSS } from '@dnd-kit/utilities';
@@ -11,13 +12,13 @@ import { CSS } from '@dnd-kit/utilities';
 const LONG_HOLD_MS = 500;
 const HOLD_DRIFT_PX = 4;
 
-const TreeNode = ({ node, level, hoveredFolderId, index }) => {
+const TreeNode = ({ node, level, hoveredFolderId, index, onPreview }) => {
   const { state, dispatch } = useExplorer();
   const { state: ixState, dispatch: ixDispatch } = useInteraction();
   const [renaming, setRenaming] = useState(false);
   const [renameVal, setRenameVal] = useState(node.name);
   const [menuOpen, setMenuOpen] = useState(false);
-  const [deleteMenuOpen, setDeleteMenuOpen] = useState(false);
+  const [menuPos, setMenuPos] = useState({ top: 0, left: 0 });
 
   // Long-hold refs
   const holdTimer = useRef(null);
@@ -238,11 +239,15 @@ const TreeNode = ({ node, level, hoveredFolderId, index }) => {
             <button
               className="icon-btn action-btn-tiny"
               style={{ position: 'relative', zIndex: 9999 }}
-              onClick={() => setMenuOpen(!menuOpen)}
+              onClick={(e) => {
+                const rect = e.currentTarget.getBoundingClientRect();
+                setMenuPos({ top: rect.bottom + 4, left: rect.right - 180 });
+                setMenuOpen(!menuOpen);
+              }}
             >
               <MoreHorizontal size={14} />
             </button>
-            {menuOpen && (
+            {menuOpen && createPortal(
               <>
                 <div
                   className="menu-backdrop"
@@ -254,10 +259,18 @@ const TreeNode = ({ node, level, hoveredFolderId, index }) => {
                   onClick={(e) => {
                     e.stopPropagation();
                     setMenuOpen(false);
-                    setDeleteMenuOpen(false);
                   }}
                 />
-                <div className="tree-context-menu anim-scale-in" style={{ zIndex: 9999, pointerEvents: 'auto' }}>
+                <div className="tree-context-menu anim-scale-in" style={{
+                  position: 'fixed',
+                  top: `${menuPos.top}px`,
+                  left: `${menuPos.left}px`,
+                  zIndex: 10000,
+                  pointerEvents: 'auto'
+                }}>
+                  <button onClick={(e) => { e.stopPropagation(); onPreview?.(node); setMenuOpen(false); }}>
+                    <Info size={12} /> Preview
+                  </button>
                   <button onClick={() => {
                     dispatch({ type: 'CREATE_FOLDER', payload: { name: 'New Folder', parentId: node.id } });
                     setMenuOpen(false);
@@ -269,27 +282,13 @@ const TreeNode = ({ node, level, hoveredFolderId, index }) => {
                   </button>
                   <button
                     className="danger"
-                    style={{ position: 'relative' }}
-                    onClick={(e) => { e.stopPropagation(); setDeleteMenuOpen(!deleteMenuOpen); }}
+                    onClick={(e) => executeDelete(e, false)}
                   >
                     <Trash2 size={12} /> Delete
-                    {deleteMenuOpen && (
-                      <div
-                        className="sub-menu anim-fade-in"
-                        style={{ position: 'absolute', right: '100%', top: 0, marginTop: '-4px' }}
-                        onClick={e => e.stopPropagation()}
-                      >
-                        <button className="danger" onClick={(e) => executeDelete(e, false)}>
-                          Delete Everything
-                        </button>
-                        <button onClick={(e) => executeDelete(e, true)}>
-                          Keep Contents
-                        </button>
-                      </div>
-                    )}
                   </button>
                 </div>
-              </>
+              </>,
+              document.body
             )}
           </div>
         )}
@@ -305,6 +304,7 @@ const TreeNode = ({ node, level, hoveredFolderId, index }) => {
                 level={level + 1}
                 hoveredFolderId={hoveredFolderId}
                 index={i}
+                onPreview={onPreview}
               />
             ))}
           </SortableContext>
@@ -314,7 +314,7 @@ const TreeNode = ({ node, level, hoveredFolderId, index }) => {
   );
 };
 
-export default function FolderTree({ hoveredFolderId }) {
+export default function FolderTree({ hoveredFolderId, onPreview }) {
   const { state, dispatch } = useExplorer();
 
   const rootNode = state.tree.find(n => n.id === 'root');
@@ -335,7 +335,7 @@ export default function FolderTree({ hoveredFolderId }) {
       <div className="folder-tree-content">
         {rootNode && (
           <SortableContext items={[rootNode.id]} strategy={verticalListSortingStrategy}>
-            <TreeNode node={rootNode} level={0} hoveredFolderId={hoveredFolderId} index={0} />
+            <TreeNode node={rootNode} level={0} hoveredFolderId={hoveredFolderId} index={0} onPreview={onPreview} />
           </SortableContext>
         )}
       </div>

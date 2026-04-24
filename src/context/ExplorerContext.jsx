@@ -4,7 +4,7 @@ const ExplorerContext = createContext(null);
 
 const initialState = {
   tree: [
-    { id: 'root', type: 'folder', name: 'Root', parentId: null }
+    { id: 'root', type: 'folder', name: 'My Garden', parentId: null }
   ],
   selectedFolderId: 'root',
   expandedFolderIds: ['root'],
@@ -96,7 +96,7 @@ function explorerReducer(state, action) {
     case 'MOVE_ITEMS': {
       const { itemIds, targetFolderId } = action.payload;
       if (itemIds.includes(targetFolderId)) return state; // Can't drop into self
-      
+
       // Prevent dropping into descendants
       const isDescendant = (folderId, targetId) => {
         let current = state.tree.find(n => n.id === targetId);
@@ -120,7 +120,7 @@ function explorerReducer(state, action) {
       const { activeId, overId } = action.payload;
       const activeNode = state.tree.find(n => n.id === activeId);
       const overNode = state.tree.find(n => n.id === overId);
-      
+
       if (!activeNode || !overNode || activeNode.parentId !== overNode.parentId) return state;
 
       const parentId = activeNode.parentId;
@@ -137,14 +137,14 @@ function explorerReducer(state, action) {
     }
     case 'SELECT_ITEM': {
       const { id, isCtrl, isShift } = action.payload;
-      
+
       if (!isCtrl && !isShift) {
         return { ...state, selectedItemIds: [id], lastSelectedItemId: id };
       }
 
       if (isCtrl) {
         const isSelected = state.selectedItemIds.includes(id);
-        const newSelection = isSelected 
+        const newSelection = isSelected
           ? state.selectedItemIds.filter(i => i !== id)
           : [...state.selectedItemIds, id];
         return { ...state, selectedItemIds: newSelection, lastSelectedItemId: id };
@@ -153,15 +153,15 @@ function explorerReducer(state, action) {
       if (isShift && state.lastSelectedItemId) {
         const targetNode = state.tree.find(n => n.id === id);
         const lastNode = state.tree.find(n => n.id === state.lastSelectedItemId);
-        
+
         if (targetNode && lastNode && targetNode.parentId === lastNode.parentId) {
           const siblings = state.tree.filter(n => n.parentId === targetNode.parentId);
           const startIndex = siblings.findIndex(n => n.id === state.lastSelectedItemId);
           const endIndex = siblings.findIndex(n => n.id === id);
-          
+
           const start = Math.min(startIndex, endIndex);
           const end = Math.max(startIndex, endIndex);
-          
+
           const rangeIds = siblings.slice(start, end + 1).map(n => n.id);
           const newSelection = Array.from(new Set([...state.selectedItemIds, ...rangeIds]));
           return { ...state, selectedItemIds: newSelection };
@@ -239,7 +239,11 @@ export function ExplorerProvider({ children }) {
         const parsed = JSON.parse(saved);
         // Ensure root always exists
         if (!parsed.tree.find(n => n.id === 'root')) {
-          parsed.tree.unshift({ id: 'root', type: 'folder', name: 'Root', parentId: null });
+          parsed.tree.unshift({ id: 'root', type: 'folder', name: 'My Garden', parentId: null });
+        } else {
+          // Force name update if it was saved as Root
+          const r = parsed.tree.find(n => n.id === 'root');
+          if (r) r.name = 'My Garden';
         }
         return { ...init, ...parsed };
       }
