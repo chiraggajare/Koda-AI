@@ -300,11 +300,9 @@ export default function Sidebar({ open, onToggle }) {
         )}
 
         {/* New Chat */}
-        {hasChats && (
-          <button className="sidebar-new-chat" onClick={handleNewChat} id="new-chat-btn" title="New Chat">
-            <Plus size={16} /> <span>New Chat</span>
-          </button>
-        )}
+        <button className="sidebar-new-chat" onClick={handleNewChat} id="new-chat-btn" title="New Chat">
+          <Plus size={16} /> <span>New Chat</span>
+        </button>
 
         <div className="sidebar-nav">
           {/* Explorer */}

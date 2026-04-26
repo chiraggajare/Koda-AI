@@ -130,7 +130,7 @@ export default function MessageBubble({ message, conversationId, isEditing, setE
 
           {/* User message hover actions */}
           {isUser && !isLoading && !isEditing && (
-            <div className="user-message-actions anim-fade-in">
+            <div className="user-message-actions">
               <button className={`action-btn-sm ${copied ? 'copied' : ''}`} onClick={handleCopy} title="Copy">
                 {copied ? <Check size={12} /> : <Copy size={12} />}
               </button>
@@ -216,7 +216,7 @@ export default function MessageBubble({ message, conversationId, isEditing, setE
 
         {/* Action row — only for AI messages */}
         {!isUser && !isLoading && (
-          <div className="message-actions anim-fade-in">
+          <div className={`message-actions ${moreOpen ? 'menu-open' : ''}`}>
             <button
               className={`action-btn ${message.liked === true ? 'active-like' : ''}`}
               onClick={() => handleLike(true)}

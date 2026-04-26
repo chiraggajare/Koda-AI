@@ -43,7 +43,7 @@ const TreeNode = ({ node, level, hoveredFolderId, index, onPreview }) => {
     isDragging,
   } = useSortable({
     id: node.id,
-    data: { type: 'folder', node }
+    data: { type: 'folder', node, level }
   });
 
   const style = {

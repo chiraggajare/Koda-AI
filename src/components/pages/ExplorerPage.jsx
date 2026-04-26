@@ -110,12 +110,21 @@ export default function ExplorerPage() {
       ? Array.from(selSet)
       : [active.id];
 
-    if (hoveredFolderId && hoveredFolderId === over.id) {
+    // FolderCards use prefixed IDs to avoid dnd-kit duplicate-ID bugs;
+    // FolderTree nodes use the raw folder ID. Handle both.
+    const rawOverId = String(over.id).startsWith('folder-card-')
+      ? String(over.id).replace('folder-card-', '')
+      : over.id;
+    const overData = over.data.current;
+    const isFolderDrop = overData?.type === 'folder' && rawOverId !== active.id;
+
+    if (isFolderDrop) {
+      const targetFolderId = rawOverId;
       const prevParents = itemsToMove.map(id => ({
         id,
         prevParentId: explorerState.tree.find(n => n.id === id)?.parentId,
       }));
-      dispatch({ type: 'MOVE_ITEMS', payload: { itemIds: itemsToMove, targetFolderId: hoveredFolderId } });
+      dispatch({ type: 'MOVE_ITEMS', payload: { itemIds: itemsToMove, targetFolderId } });
       ixDispatch({
         type: 'SHOW_TOAST',
         payload: {
@@ -192,7 +201,14 @@ export default function ExplorerPage() {
   const customCollisionDetection = (args) => {
     const pointerCollisions = pointerWithin(args);
     const folderCollisions = pointerCollisions.filter(c => c.data?.current?.type === 'folder');
-    if (folderCollisions.length > 0) return folderCollisions;
+    if (folderCollisions.length > 0) {
+      folderCollisions.sort((a, b) => {
+        const aLevel = a.data?.current?.level ?? 0;
+        const bLevel = b.data?.current?.level ?? 0;
+        return bLevel - aLevel;
+      });
+      return folderCollisions;
+    }
     return rectIntersection(args);
   };
 

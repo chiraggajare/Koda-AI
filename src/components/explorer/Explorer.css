@@ -280,7 +280,9 @@
   transition: all 150ms ease;
 }
 
-.tree-node.drop-target {
+.tree-node.drop-target,
+.chat-card.drop-target,
+.chat-list-container.drop-target {
   background: rgba(138, 43, 226, 0.18) !important;
   border: 1px dashed var(--accent) !important;
   box-shadow: inset 0 0 10px rgba(138, 43, 226, 0.2);

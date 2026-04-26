@@ -29,7 +29,7 @@ export default function Navbar({ variant = 'landing' }) {
   };
 
   const handleTempChat = () => {
-    dispatch({ type: 'NEW_CONVERSATION' });
+    dispatch({ type: 'NEW_CONVERSATION', payload: { isTemporary: true } });
     navigate('/chat');
   };
 
@@ -46,8 +46,21 @@ export default function Navbar({ variant = 'landing' }) {
 
         {/* Chat title (only in chat variant) */}
         {variant === 'chat' && activeConversation && !isEmptyChat && (
-          <div className="navbar-title anim-fade-in">
+          <div className="navbar-title anim-fade-in" style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
             <span>{activeConversation.title}</span>
+            {activeConversation.isTemporary && (
+              <span style={{ 
+                fontSize: '0.65rem', 
+                background: 'rgba(124, 106, 255, 0.15)', 
+                color: 'var(--accent)', 
+                padding: '2px 8px', 
+                borderRadius: '10px',
+                border: '1px solid var(--accent-dim)',
+                fontWeight: 600,
+                textTransform: 'uppercase',
+                letterSpacing: '0.5px'
+              }}>Temporary</span>
+            )}
           </div>
         )}
 

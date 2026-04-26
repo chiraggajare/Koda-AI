@@ -1,6 +1,6 @@
 import React, { useEffect, useRef, useState } from 'react';
 import { useNavigate, useLocation } from 'react-router-dom';
-import { Sparkles, ArrowRight, Sprout } from 'lucide-react';
+import { Sparkles, ArrowRight, Sprout, MessageSquareDashed } from 'lucide-react';
 import { useChat } from '../../context/ChatContext';
 import Navbar from '../layout/Navbar';
 import ChatBox from '../chat/ChatBox';
@@ -75,7 +75,17 @@ export default function ChatPage() {
       <div className="chat-area">
         {activeConversation.messages.length === 0 && (
           <div className="landing-content anim-fade-in" style={{ padding: '20px 16px', justifyContent: 'center' }}>
-            {activeConversation.seedId ? (
+            {activeConversation.isTemporary ? (
+              <div className="landing-greeting anim-fade-in-up">
+                <div className="greeting-icon" style={{ background: 'var(--bg-glass-hover)', border: '1px solid var(--accent-dim)' }}>
+                  <MessageSquareDashed size={28} style={{ color: 'var(--accent)' }} />
+                </div>
+                <h1 className="greeting-text">
+                  Temporary <span className="greeting-name">Chat</span>
+                </h1>
+                <p className="greeting-sub">This conversation won't be saved to your history. Once you leave, it's gone.</p>
+              </div>
+            ) : activeConversation.seedId ? (
               <div className="landing-greeting anim-fade-in-up">
                 <div className="greeting-icon">
                   <Sprout size={28} />

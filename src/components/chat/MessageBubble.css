@@ -146,6 +146,17 @@
   margin-top: 6px;
   background: transparent;
   padding: 4px 0;
+  opacity: 0;
+  transform: translateY(4px);
+  transition: all 0.2s ease;
+  pointer-events: none;
+}
+
+.message-row:hover .message-actions,
+.message-actions.menu-open {
+  opacity: 1;
+  transform: translateY(0);
+  pointer-events: auto;
 }
 
 /* User message hover actions */
@@ -153,7 +164,7 @@
   position: absolute;
   top: -12px;
   right: 12px;
-  display: none;
+  display: flex;
   align-items: center;
   gap: 4px;
   background: var(--bg-secondary);
@@ -162,10 +173,16 @@
   padding: 4px;
   box-shadow: var(--shadow-sm);
   z-index: 10;
+  opacity: 0;
+  transform: scale(0.9);
+  transition: all 0.2s ease;
+  pointer-events: none;
 }
 
-.message-bubble:hover .user-message-actions {
-  display: flex;
+.message-row:hover .user-message-actions {
+  opacity: 1;
+  transform: scale(1);
+  pointer-events: auto;
 }
 
 .action-btn-sm {

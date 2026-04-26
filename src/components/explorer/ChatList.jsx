@@ -10,6 +10,7 @@ import {
 } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 import { useSortable, SortableContext, rectSortingStrategy } from '@dnd-kit/sortable';
+import { useDroppable } from '@dnd-kit/core';
 import { CSS } from '@dnd-kit/utilities';
 import { useVirtualizer } from '@tanstack/react-virtual';
 
@@ -27,6 +28,128 @@ function formatDate(ts) {
   if (diff < 7) return `${diff}d ago`;
   return d.toLocaleDateString('en-US', { month: 'short', day: 'numeric' });
 }
+
+// ─── FolderCard ─ droppable only (prefixed ID avoids ID clash with FolderTree)
+const FolderCard = ({ item, sq, getPathStr, allFolders, viewMode, index }) => {
+  const { state: explorerState, dispatch: explorerDispatch } = useExplorer();
+  const { state: ixState, dispatch: ixDispatch } = useInteraction();
+  const [menuOpen, setMenuOpen] = useState(false);
+  const [moveMenuOpen, setMoveMenuOpen] = useState(false);
+  const [menuPos, setMenuPos] = useState({ top: 0, left: 0 });
+  const [renaming, setRenaming] = useState(false);
+  const [renameVal, setRenameVal] = useState(item.name);
+  const inputRef = useRef(null);
+  const holdTimer = useRef(null);
+  const holdPos = useRef({ x: 0, y: 0 });
+  const isMultiSelected = ixState.selectedItems.has(item.id);
+  const isChecked = ixState.checkedItems.has(item.id);
+  const childCount = explorerState.tree.filter(n => n.parentId === item.id).length;
+  const meta = sq ? getPathStr(item.parentId) : `${childCount} items`;
+
+  // Use a PREFIXED droppable id so it never conflicts with FolderTree useSortable nodes
+  const { setNodeRef, isOver } = useDroppable({
+    id: `folder-card-${item.id}`,
+    data: { type: 'folder', folderId: item.id }
+  });
+
+  const handleSelect = (e) => {
+    e.stopPropagation();
+    if (ixState.isCheckboxMode) { ixDispatch({ type: 'TOGGLE_CHECKBOX', payload: { id: item.id } }); return; }
+    if (!e.ctrlKey && !e.metaKey) explorerDispatch({ type: 'SET_SELECTED_FOLDER', payload: item.id });
+  };
+
+  const handlePointerDown = (e) => {
+    if (e.target.closest('button, input, a')) return;
+    const isMeta = e.ctrlKey || e.metaKey;
+    if (!isMeta && !ixState.selectedItems.has(item.id)) { ixDispatch({ type: 'CLEAR_SELECTION' }); ixDispatch({ type: 'TOGGLE_SELECT', payload: { id: item.id } }); }
+    else if (isMeta) ixDispatch({ type: 'TOGGLE_SELECT', payload: { id: item.id } });
+    holdPos.current = { x: e.clientX, y: e.clientY };
+    holdTimer.current = setTimeout(() => { navigator.vibrate?.(30); ixDispatch({ type: 'ENTER_CHECKBOX_MODE', payload: item.id }); }, LONG_HOLD_MS);
+  };
+  const handlePointerMove = (e) => {
+    if (!holdTimer.current) return;
+    if (Math.hypot(e.clientX - holdPos.current.x, e.clientY - holdPos.current.y) > HOLD_DRIFT_PX) { clearTimeout(holdTimer.current); holdTimer.current = null; }
+  };
+  const handlePointerUp = () => { clearTimeout(holdTimer.current); holdTimer.current = null; };
+
+  const handleRenameSave = () => {
+    if (renameVal.trim()) explorerDispatch({ type: 'RENAME_NODE', payload: { id: item.id, name: renameVal.trim() } });
+    setRenaming(false);
+  };
+
+  const executeDelete = (e) => {
+    e.stopPropagation();
+    const ids = ixState.selectedItems.size > 0 && ixState.selectedItems.has(item.id) ? Array.from(ixState.selectedItems) : [item.id];
+    const deletedNodes = getSubtree(explorerState.tree, ids);
+    explorerDispatch({ type: 'DELETE_ITEMS', payload: { itemIds: ids, moveChildrenToParent: false } });
+    ixDispatch({ type: 'SHOW_TOAST', payload: { message: `${ids.length} item${ids.length > 1 ? 's' : ''} deleted`, undoType: 'UNDO_DELETE', undoPayload: { nodes: deletedNodes } } });
+    setMenuOpen(false);
+  };
+
+  const handleMove = (e, targetFolderId) => {
+    e.stopPropagation();
+    const ids = ixState.selectedItems.size > 0 && ixState.selectedItems.has(item.id) ? Array.from(ixState.selectedItems) : [item.id];
+    explorerDispatch({ type: 'MOVE_ITEMS', payload: { itemIds: ids, targetFolderId } });
+    setMoveMenuOpen(false); setMenuOpen(false);
+  };
+
+  useEffect(() => { if (explorerState.editingId === item.id) { setRenaming(true); setRenameVal(item.name); } }, [explorerState.editingId, item.id]);
+  useEffect(() => { if (renaming && inputRef.current) { inputRef.current.focus(); inputRef.current.select(); } }, [renaming]);
+  useEffect(() => () => clearTimeout(holdTimer.current), []);
+
+  return (
+    <div
+      ref={setNodeRef}
+      className={['chat-card anim-fade-in-up', isMultiSelected ? 'is-selected' : '', viewMode === 'list' ? 'list-view' : '', isOver ? 'drop-target' : ''].join(' ')}
+      style={{ zIndex: menuOpen ? 1000 : 1 }}
+      onClick={handleSelect} onPointerDown={handlePointerDown} onPointerMove={handlePointerMove} onPointerUp={handlePointerUp}
+    >
+      {ixState.isCheckboxMode && (
+        <input type="checkbox" className="row-checkbox" checked={isChecked}
+          style={{ animationDelay: `${index * 20}ms` }}
+          onChange={() => ixDispatch({ type: 'TOGGLE_CHECKBOX', payload: { id: item.id } })}
+          onPointerDown={e => e.stopPropagation()} onClick={e => e.stopPropagation()} />
+      )}
+      <div className={`chat-card-info-wrap ${menuOpen ? 'menu-active' : ''}`}>
+        <div className="chat-card-icon folder-icon-wrap"><Folder size={18} /></div>
+        <div className="chat-card-info">
+          {renaming ? (
+            <input ref={inputRef} className="inline-rename-input" value={renameVal}
+              onChange={e => setRenameVal(e.target.value)} onBlur={handleRenameSave}
+              onKeyDown={e => { if (e.key === 'Enter') handleRenameSave(); if (e.key === 'Escape') setRenaming(false); }}
+              onClick={e => e.stopPropagation()} />
+          ) : (
+            <div className="chat-card-title">{item.name}</div>
+          )}
+          <div className="chat-card-meta">{meta}</div>
+        </div>
+      </div>
+      <div className="chat-card-actions" onPointerDown={e => e.stopPropagation()} onClick={e => e.stopPropagation()} style={{ pointerEvents: 'auto' }}>
+        <button className="icon-btn action-btn" style={{ position: 'relative', zIndex: 9999 }}
+          onClick={e => { const rect = e.currentTarget.getBoundingClientRect(); setMenuPos({ top: rect.bottom + 4, left: rect.right - 180 }); setMenuOpen(!menuOpen); }}>
+          <MoreHorizontal size={16} />
+        </button>
+        {menuOpen && createPortal(
+          <>
+            <div className="menu-backdrop" style={{ position: 'fixed', top: 0, left: 0, width: '100vw', height: '100vh', zIndex: 9998, background: 'transparent', pointerEvents: 'auto' }}
+              onClick={e => { e.stopPropagation(); setMenuOpen(false); setMoveMenuOpen(false); }} />
+            <div className="context-menu anim-scale-in" style={{ position: 'fixed', top: `${menuPos.top}px`, left: `${menuPos.left}px`, zIndex: 10000, pointerEvents: 'auto' }}>
+              <button onClick={() => { explorerDispatch({ type: 'SET_SELECTED_FOLDER', payload: item.id }); setMenuOpen(false); }}><ExternalLink size={14} /> Open</button>
+              <button onClick={() => { setRenaming(true); setMenuOpen(false); }}><Edit2 size={14} /> Rename</button>
+              <button onClick={() => setMoveMenuOpen(!moveMenuOpen)}><FolderOutput size={14} /> Move to...</button>
+              {moveMenuOpen && (
+                <div className="sub-menu anim-fade-in" style={{ position: 'absolute', left: '100%', top: 0 }}>
+                  {allFolders.filter(f => f.id !== item.id).map(f => <button key={f.id} onClick={e => handleMove(e, f.id)}>{f.name}</button>)}
+                </div>
+              )}
+              <button className="danger" onClick={executeDelete}><Trash2 size={14} /> Delete</button>
+            </div>
+          </>, document.body
+        )}
+      </div>
+    </div>
+  );
+};
 
 // ─── GridCard ──────────────────────────────────────────────
 const GridCard = ({ item, sq, getPathStr, allFolders, index, onPin, onPreview, viewMode }) => {
@@ -529,6 +652,16 @@ export default function ChatList({ onItemPreview }) {
                   >
                     {row.type === 'section' ? (
                       <div className="list-section-label">{row.label}</div>
+                    ) : row.type === 'folder' ? (
+                      <FolderCard
+                        key={row.id}
+                        item={row}
+                        sq={sq}
+                        getPathStr={getPathStr}
+                        allFolders={allFolders}
+                        index={virtualRow.index}
+                        viewMode={viewMode}
+                      />
                     ) : (
                       <SortableContext items={[row.id]} strategy={rectSortingStrategy}>
                         <GridCard
@@ -554,7 +687,17 @@ export default function ChatList({ onItemPreview }) {
                   if (row.type === 'section') {
                     return <div key={`section-${i}`} className="list-section-label">{row.label}</div>;
                   }
-                  return (
+                  return row.type === 'folder' ? (
+                    <FolderCard
+                      key={row.id}
+                      item={row}
+                      sq={sq}
+                      getPathStr={getPathStr}
+                      allFolders={allFolders}
+                      index={i}
+                      viewMode={viewMode}
+                    />
+                  ) : (
                     <GridCard
                       key={row.id}
                       item={row}

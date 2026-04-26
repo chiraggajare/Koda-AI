@@ -20,28 +20,33 @@ function chatReducer(state, action) {
     case 'NEW_CONVERSATION': {
       const requestedSeedId = action.payload?.seedId || null;
       const requestedSeedName = requestedSeedId ? state.seeds.find(s => s.id === requestedSeedId)?.name || 'Seed' : 'New Chat';
+      const isTemporary = action.payload?.isTemporary || false;
 
       // First check if there's already an empty conversation matching this EXACT seed configuration
-      const exactEmptyMatch = state.conversations.find(c => c.messages.length === 0 && c.seedId === requestedSeedId);
-      if (exactEmptyMatch) {
-        return { ...state, activeConversationId: exactEmptyMatch.id };
-      }
+      // We skip this check for temporary chats to ensure they are unique if requested
+      if (!isTemporary) {
+        const exactEmptyMatch = state.conversations.find(c => c.messages.length === 0 && c.seedId === requestedSeedId && !c.isTemporary);
+        if (exactEmptyMatch) {
+          return { ...state, activeConversationId: exactEmptyMatch.id };
+        }
 
-      // Otherwise if the currently active chat is already empty and has NO seed, we might just stay on it unless a specific seed was requested
-      const activeConv = state.conversations.find(c => c.id === state.activeConversationId);
-      if (activeConv && activeConv.messages.length === 0 && !action.payload?.force && !requestedSeedId) {
-        return state;
+        // Otherwise if the currently active chat is already empty and has NO seed, we might just stay on it unless a specific seed was requested
+        const activeConv = state.conversations.find(c => c.id === state.activeConversationId);
+        if (activeConv && activeConv.messages.length === 0 && !action.payload?.force && !requestedSeedId && !activeConv.isTemporary) {
+          return state;
+        }
       }
 
       const id = `conv_${Date.now()}`;
       const conv = {
         id,
-        title: requestedSeedName,
+        title: isTemporary ? 'Temporary Chat' : requestedSeedName,
         messages: [],
         model: 'fast',
         createdAt: Date.now(),
         pinned: false,
         seedId: requestedSeedId,
+        isTemporary: isTemporary,
       };
       return {
         ...state,
