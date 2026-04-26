@@ -357,3 +357,42 @@
   opacity: 0.4;
   cursor: not-allowed;
 }
+
+/* ── Tablet (≤1024px) ── */
+@media (max-width: 1024px) {
+  .chatbox-wrapper {
+    padding: 0 12px 8px;
+  }
+}
+
+/* ── Mobile (≤768px) ── */
+@media (max-width: 768px) {
+  .chatbox-wrapper {
+    padding: 0 8px 6px;
+    max-width: 100%;
+  }
+  .chatbox {
+    padding: 12px 14px 10px;
+    border-radius: var(--radius-lg);
+  }
+  .chatbox-input {
+    font-size: 1rem; /* larger font for mobile readability */
+  }
+  .toolbar-text-btn span {
+    display: none; /* hide "Tools" label, just show icon */
+  }
+  .toolbar-text-btn {
+    padding: 5px 8px;
+  }
+  .model-selector-btn span {
+    display: none; /* hide model label on mobile */
+  }
+  .tool-chip {
+    font-size: 0.82rem;
+    padding: 8px 12px;
+    min-height: 36px;
+  }
+  .model-option {
+    padding: 14px 16px; /* larger touch targets */
+  }
+}

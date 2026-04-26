@@ -1,8 +1,8 @@
-import React, { useState, useRef } from 'react';
+import React, { useState, useRef, useContext } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { Sparkles, ArrowRight } from 'lucide-react';
 import { useChat } from '../../context/ChatContext';
-import Navbar from '../layout/Navbar';
+import { SidebarToggleContext } from '../layout/Layout';
 import ChatBox from '../chat/ChatBox';
 import './LandingPage.css';
 
@@ -18,6 +18,7 @@ export default function LandingPage() {
   const navigate = useNavigate();
   const [model, setModel] = useState('fast');
   const [injectedText, setInjectedText] = useState('');
+  const onMenuToggle = useContext(SidebarToggleContext);
 
   const handleSend = (text) => {
     dispatch({ type: 'NEW_CONVERSATION' });
@@ -37,8 +38,6 @@ export default function LandingPage() {
 
   return (
     <div className="landing-page">
-      <Navbar variant="landing" />
-
       <div className="landing-content">
         {/* Greeting */}
         <div className="landing-greeting anim-fade-in-up">

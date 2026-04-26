@@ -4,7 +4,7 @@ const ExplorerContext = createContext(null);
 
 const initialState = {
   tree: [
-    { id: 'root', type: 'folder', name: 'My Garden', parentId: null }
+    { id: 'root', type: 'folder', name: 'Explorer', parentId: null }
   ],
   selectedFolderId: 'root',
   expandedFolderIds: ['root'],
@@ -239,11 +239,11 @@ export function ExplorerProvider({ children }) {
         const parsed = JSON.parse(saved);
         // Ensure root always exists
         if (!parsed.tree.find(n => n.id === 'root')) {
-          parsed.tree.unshift({ id: 'root', type: 'folder', name: 'My Garden', parentId: null });
+          parsed.tree.unshift({ id: 'root', type: 'folder', name: 'Explorer', parentId: null });
         } else {
-          // Force name update if it was saved as Root
+          // Force name update
           const r = parsed.tree.find(n => n.id === 'root');
-          if (r) r.name = 'My Garden';
+          if (r) r.name = 'Explorer';
         }
         return { ...init, ...parsed };
       }

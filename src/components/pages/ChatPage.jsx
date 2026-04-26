@@ -1,8 +1,8 @@
-import React, { useEffect, useRef, useState } from 'react';
+import React, { useEffect, useRef, useState, useContext } from 'react';
 import { useNavigate, useLocation } from 'react-router-dom';
 import { Sparkles, ArrowRight, Sprout, MessageSquareDashed } from 'lucide-react';
 import { useChat } from '../../context/ChatContext';
-import Navbar from '../layout/Navbar';
+import { SidebarToggleContext } from '../layout/Layout';
 import ChatBox from '../chat/ChatBox';
 import MessageBubble from '../chat/MessageBubble';
 import './ChatPage.css';
@@ -24,6 +24,7 @@ export default function ChatPage() {
   const [injectedText, setInjectedText] = useState('');
   const [editingMessageId, setEditingMessageId] = useState(null);
   const initialSent = useRef(false);
+  const onMenuToggle = useContext(SidebarToggleContext);
 
   // Send initial message if passed via state
   useEffect(() => {
@@ -68,10 +69,15 @@ export default function ChatPage() {
 
   const isLoading = activeConversation.messages.some(m => m.loading);
 
+  // Derive capability flags from the active expert (if any)
+  const activeSeed = activeConversation.seedId
+    ? state.seeds.find(s => s.id === activeConversation.seedId)
+    : null;
+  const fileSearchEnabled = activeSeed ? (activeSeed.capabilities?.fileSearch ?? true) : true;
+  const webSearchEnabled  = activeSeed ? (activeSeed.capabilities?.webSearch  ?? true) : true;
+
   return (
     <div className="chat-page">
-      <Navbar variant="chat" />
-
       <div className="chat-area">
         {activeConversation.messages.length === 0 && (
           <div className="landing-content anim-fade-in" style={{ padding: '20px 16px', justifyContent: 'center' }}>
@@ -91,9 +97,9 @@ export default function ChatPage() {
                   <Sprout size={28} />
                 </div>
                 <h1 className="greeting-text">
-                  Chatting with <strong style={{ color: 'var(--accent)' }}>{state.seeds.find(s => s.id === activeConversation.seedId)?.name || 'Seed'}</strong>
+                  Chatting with <strong style={{ color: 'var(--accent)' }}>{state.seeds.find(s => s.id === activeConversation.seedId)?.name || 'Expert'}</strong>
                 </h1>
-                <p className="greeting-sub">This chat is powered by your custom Seed persona.</p>
+                <p className="greeting-sub">This chat is powered by your custom Expert persona.</p>
               </div>
             ) : (
               <div className="landing-greeting anim-fade-in-up">
@@ -141,6 +147,8 @@ export default function ChatPage() {
           onModelChange={handleModelChange}
           disabled={isLoading}
           injectedText={injectedText}
+          fileSearchEnabled={fileSearchEnabled}
+          webSearchEnabled={webSearchEnabled}
         />
         <p className="chat-disclaimer">
           <em>Koda is an AI and can make mistakes. Verify important information.</em>

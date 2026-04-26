@@ -1,25 +1,34 @@
 import React, { useState } from 'react';
 import { useMouseGradient } from '../../hooks/useMouseGradient';
 import Sidebar from './Sidebar';
+import Navbar from './Navbar';
 import BackgroundGradientAnimation from './BackgroundGradientAnimation';
 import ParticlesBackground from './ParticlesBackground';
 import './Layout.css';
 
+export const SidebarToggleContext = React.createContext(() => {});
+
 export default function Layout({ children }) {
-  const [sidebarOpen, setSidebarOpen] = useState(true);
+  const [sidebarOpen, setSidebarOpen] = useState(() => window.innerWidth > 1024);
+  const toggle = () => setSidebarOpen(o => !o);
   useMouseGradient();
 
   return (
-    <div className="layout-root">
-      {/* Animated gradient background */}
-      <BackgroundGradientAnimation />
-      <ParticlesBackground />
+    <SidebarToggleContext.Provider value={toggle}>
+      <div className="layout-root">
+        {/* Animated gradient background */}
+        <BackgroundGradientAnimation />
+        <ParticlesBackground />
 
-      <Sidebar open={sidebarOpen} onToggle={() => setSidebarOpen(o => !o)} />
+        {/* Global Navbar */}
+        <Navbar onMenuToggle={toggle} />
 
-      <div className={`layout-main ${sidebarOpen ? 'sidebar-open' : 'sidebar-closed'}`}>
-        {children}
+        <Sidebar open={sidebarOpen} onToggle={toggle} />
+
+        <div className={`layout-main ${sidebarOpen ? 'sidebar-open' : 'sidebar-closed'}`}>
+          {children}
+        </div>
       </div>
-    </div>
+    </SidebarToggleContext.Provider>
   );
 }

@@ -50,3 +50,17 @@
   padding: 6px 0 12px;
   opacity: 0.7;
 }
+
+/* ── Mobile (≤768px) ── */
+@media (max-width: 768px) {
+  .chat-area {
+    padding: 8px 0 0;
+  }
+  .chat-input-area {
+    padding-top: 4px;
+  }
+  .chat-disclaimer {
+    font-size: 0.68rem;
+    padding: 4px 0 env(safe-area-inset-bottom, 8px);
+  }
+}

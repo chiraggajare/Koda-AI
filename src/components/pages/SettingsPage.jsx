@@ -2,6 +2,7 @@ import React, { useState } from 'react';
 import {
   Activity, Sliders, Palette, MessageSquare, HelpCircle,
   ChevronDown, ChevronUp, Send, Check, User, Sprout,
+  Brain, Plus, X, Trash2, BookOpen,
 } from 'lucide-react';
 import { useChat } from '../../context/ChatContext';
 import { useTheme } from '../../context/ThemeContext';
@@ -10,23 +11,29 @@ import './SettingsPage.css';
 
 const FAQ = [
   { q: 'How does Koda work?', a: 'Koda is an AI chatbot that uses advanced language models to understand and respond to your messages. It can help with analysis, writing, coding, research, and much more.' },
-  { q: 'What are Seeds?', a: 'Seeds are custom AI personas you build. You define a name, instructions, and optionally a knowledge base. Koda will follow those instructions when you chat through a seed.' },
-  { q: 'Is my data stored?', a: 'All your data (chats, seeds, settings) is stored locally in your browser using localStorage. Nothing is sent to any server in this demo.' },
+  { q: 'What are Experts?', a: 'Experts are custom AI personas you build. You define a name, instructions, and optionally a knowledge base. Koda will follow those instructions when you chat through an expert.' },
+  { q: 'Is my data stored?', a: 'All your data (chats, experts, settings) is stored locally in your browser using localStorage. Nothing is sent to any server in this demo.' },
   { q: 'What models are available?', a: 'Koda offers three response modes — Fast (quick answers), Thinking (detailed & nuanced), and Deep Analysis (in-depth, thorough responses).' },
   { q: 'How do I use voice input?', a: 'Click the mic button in the chat input bar. Voice input uses the Web Speech API and works best in Chrome or Edge browsers.' },
 ];
 
-const RESPONSE_STYLES = ['Balanced', 'Concise', 'Detailed', 'Friendly', 'Formal', 'Creative'];
+
 
 export default function SettingsPage() {
   const { state, dispatch } = useChat();
   const { activeTheme } = useTheme();
   const [openFaq, setOpenFaq] = useState(null);
   const [userName, setUserName] = useState(state.user.name);
-  const [responseStyle, setResponseStyle] = useState('Balanced');
+
   const [feedbackText, setFeedbackText] = useState('');
   const [feedbackSent, setFeedbackSent] = useState(false);
   const [activeTab, setActiveTab] = useState('activity');
+
+  // Personal context state
+  const [memoryEnabled, setMemoryEnabled] = useState(true);
+  const [instructions, setInstructions] = useState([]);
+  const [instructionModalOpen, setInstructionModalOpen] = useState(false);
+  const [instructionDraft, setInstructionDraft] = useState('');
 
   const totalMessages = state.conversations.reduce((sum, c) => sum + c.messages.length, 0);
 
@@ -41,12 +48,25 @@ export default function SettingsPage() {
     setTimeout(() => setFeedbackSent(false), 3000);
   };
 
+  const handleAddInstruction = () => {
+    const text = instructionDraft.trim();
+    if (!text) return;
+    setInstructions(prev => [...prev, { id: Date.now(), text }]);
+    setInstructionDraft('');
+    setInstructionModalOpen(false);
+  };
+
+  const handleDeleteInstruction = (id) => {
+    setInstructions(prev => prev.filter(i => i.id !== id));
+  };
+
   const TABS = [
-    { id: 'activity', label: 'Activity', icon: Activity },
+    { id: 'activity',  label: 'Activity',  icon: Activity },
     { id: 'personalize', label: 'Personalize', icon: Sliders },
-    { id: 'theme', label: 'Theme', icon: Palette },
-    { id: 'feedback', label: 'Feedback', icon: MessageSquare },
-    { id: 'help', label: 'Help', icon: HelpCircle },
+    { id: 'context',   label: 'Personal Context', icon: Brain },
+    { id: 'theme',     label: 'Theme',     icon: Palette },
+    { id: 'feedback',  label: 'Feedback',  icon: MessageSquare },
+    { id: 'help',      label: 'Help',      icon: HelpCircle },
   ];
 
   return (
@@ -93,7 +113,7 @@ export default function SettingsPage() {
                 </div>
                 <div className="activity-card">
                   <div className="activity-value">{state.seeds.length}</div>
-                  <div className="activity-label">Seeds Created</div>
+                  <div className="activity-label">Experts Created</div>
                 </div>
                 <div className="activity-card">
                   <div className="activity-value">{state.inventory.length}</div>
@@ -138,27 +158,97 @@ export default function SettingsPage() {
                 </div>
               </div>
 
-              <div className="settings-field">
-                <label className="field-label"><Sliders size={14} /> Response Style</label>
-                <div className="style-grid">
-                  {RESPONSE_STYLES.map(s => (
-                    <button
-                      key={s}
-                      className={`style-btn ${responseStyle === s ? 'active' : ''}`}
-                      onClick={() => setResponseStyle(s)}
-                      id={`style-${s.toLowerCase()}`}
-                    >
-                      {s}
-                    </button>
-                  ))}
-                </div>
-              </div>
 
               <div className="settings-field">
-                <label className="field-label"><Sprout size={14} /> Seeds Configured</label>
+                <label className="field-label"><Sprout size={14} /> Experts Configured</label>
                 <div className="settings-stat">
-                  <span className="stat-num">{state.seeds.length}</span> seed{state.seeds.length !== 1 ? 's' : ''} active
+                  <span className="stat-num">{state.seeds.length}</span> expert{state.seeds.length !== 1 ? 's' : ''} active
                 </div>
+              </div>
+            </div>
+          )}
+
+          {/* ── Personal Context ────────────────────────────── */}
+          {activeTab === 'context' && (
+            <div className="settings-section anim-fade-in">
+              <h2 className="section-title">Personal Context</h2>
+
+              {/* Memory toggle */}
+              <div className="context-card">
+                <div className="context-card-header">
+                  <div className="context-card-icon memory">
+                    <Brain size={18} />
+                  </div>
+                  <div className="context-card-info">
+                    <h3 className="context-card-title">Memory</h3>
+                    <p className="context-card-desc">
+                      Koda AI learns from your past chats to understand more about you and personalise your experience.
+                    </p>
+                  </div>
+                  {/* Toggle */}
+                  <button
+                    type="button"
+                    className={`settings-toggle-btn ${memoryEnabled ? 'on' : 'off'}`}
+                    onClick={() => setMemoryEnabled(e => !e)}
+                    aria-label="Toggle memory"
+                  >
+                    <div className="settings-toggle-knob" />
+                  </button>
+                </div>
+
+                {memoryEnabled && (
+                  <div className="context-card-footer anim-fade-in">
+                    <button
+                      className="context-danger-btn"
+                      onClick={() => {}}
+                    >
+                      <Trash2 size={13} /> Delete all memory data
+                    </button>
+                  </div>
+                )}
+              </div>
+
+              {/* Instructions */}
+              <div className="context-card">
+                <div className="context-card-header">
+                  <div className="context-card-icon instructions">
+                    <BookOpen size={18} />
+                  </div>
+                  <div className="context-card-info">
+                    <h3 className="context-card-title">Your Instructions for Koda AI</h3>
+                    <p className="context-card-desc">
+                      Customise how Koda responds to you by giving it instructions that apply to every conversation.
+                    </p>
+                  </div>
+                  <button
+                    className="context-add-btn"
+                    onClick={() => setInstructionModalOpen(true)}
+                    id="add-instruction-btn"
+                  >
+                    <Plus size={14} /> Add
+                  </button>
+                </div>
+
+                {instructions.length > 0 && (
+                  <div className="instructions-list">
+                    {instructions.map(inst => (
+                      <div key={inst.id} className="instruction-item">
+                        <span className="instruction-text">{inst.text}</span>
+                        <button
+                          className="instruction-delete"
+                          onClick={() => handleDeleteInstruction(inst.id)}
+                          title="Remove instruction"
+                        >
+                          <X size={13} />
+                        </button>
+                      </div>
+                    ))}
+                  </div>
+                )}
+
+                {instructions.length === 0 && (
+                  <p className="context-empty">No instructions added yet.</p>
+                )}
               </div>
             </div>
           )}
@@ -219,6 +309,48 @@ export default function SettingsPage() {
           )}
         </div>
       </div>
+
+      {/* ── Add Instruction Modal ── */}
+      {instructionModalOpen && (
+        <div className="modal-overlay anim-fade-in" onClick={() => setInstructionModalOpen(false)}>
+          <div className="modal-box anim-scale-in" onClick={e => e.stopPropagation()}>
+            <div className="modal-header">
+              <h3 className="modal-title">Add Instruction</h3>
+              <button className="icon-btn" onClick={() => setInstructionModalOpen(false)}>
+                <X size={16} />
+              </button>
+            </div>
+            <p className="modal-desc">
+              Tell Koda how you'd like it to behave, respond, or what to always keep in mind.
+            </p>
+            <textarea
+              className="modal-textarea"
+              placeholder="e.g. Always respond in a concise bullet-point format. Use technical language."
+              value={instructionDraft}
+              onChange={e => setInstructionDraft(e.target.value)}
+              rows={5}
+              autoFocus
+              id="instruction-draft-input"
+            />
+            <div className="modal-actions">
+              <button
+                className="modal-cancel-btn"
+                onClick={() => { setInstructionModalOpen(false); setInstructionDraft(''); }}
+              >
+                Cancel
+              </button>
+              <button
+                className={`modal-submit-btn ${instructionDraft.trim() ? 'ready' : ''}`}
+                onClick={handleAddInstruction}
+                disabled={!instructionDraft.trim()}
+                id="submit-instruction-btn"
+              >
+                <Check size={14} /> Submit
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 }

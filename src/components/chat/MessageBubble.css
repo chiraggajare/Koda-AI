@@ -288,3 +288,39 @@
   border-top: 1px solid var(--border);
   cursor: default;
 }
+
+/* ── Tablet (≤1024px) ── */
+@media (max-width: 1024px) {
+  .message-row {
+    padding: 10px 16px;
+  }
+  .message-group {
+    max-width: 80%;
+  }
+}
+
+/* ── Mobile (≤768px) ── */
+@media (max-width: 768px) {
+  .message-row {
+    padding: 8px 12px;
+    gap: 8px;
+  }
+  .message-group {
+    max-width: 88%;
+  }
+  .message-avatar {
+    width: 24px;
+    height: 24px;
+    font-size: 0.7rem;
+  }
+  .message-bubble {
+    font-size: 0.92rem;
+    line-height: 1.6;
+    padding: 12px 14px;
+  }
+  /* Show actions on touch — always visible on mobile */
+  .message-actions {
+    opacity: 1 !important;
+    pointer-events: auto !important;
+  }
+}

@@ -19,7 +19,7 @@ function chatReducer(state, action) {
 
     case 'NEW_CONVERSATION': {
       const requestedSeedId = action.payload?.seedId || null;
-      const requestedSeedName = requestedSeedId ? state.seeds.find(s => s.id === requestedSeedId)?.name || 'Seed' : 'New Chat';
+      const requestedSeedName = requestedSeedId ? state.seeds.find(s => s.id === requestedSeedId)?.name || 'Expert' : 'New Chat';
       const isTemporary = action.payload?.isTemporary || false;
 
       // First check if there's already an empty conversation matching this EXACT seed configuration
@@ -69,7 +69,7 @@ function chatReducer(state, action) {
               messages: [...c.messages, message],
               title: c.messages.length === 0 && message.role === 'user'
                 ? c.seedId
-                  ? `${state.seeds.find(s => s.id === c.seedId)?.name || 'Seed'} - ${message.content.split(' ').slice(0, 2).join(' ').slice(0, 20)}`
+                  ? `${state.seeds.find(s => s.id === c.seedId)?.name || 'Expert'} - ${message.content.split(' ').slice(0, 2).join(' ').slice(0, 20)}`
                   : message.content.slice(0, 40).trim() || 'New Chat'
                 : c.title,
             }

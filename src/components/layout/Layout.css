@@ -15,6 +15,7 @@
   position: relative;
   z-index: 1;
   transition: margin-left var(--transition-slow);
+  padding-top: var(--navbar-height);
 }
 
 .layout-main.sidebar-open {
@@ -26,8 +27,22 @@
   width: calc(100% - var(--sidebar-collapsed-width));
 }
 
-@media (max-width: 768px) {
+/* ── Tablet (769px–1024px) ── */
+@media (max-width: 1024px) {
   .layout-main.sidebar-open {
+    margin-left: var(--sidebar-collapsed-width);
+  }
+  .layout-main.sidebar-closed {
     margin-left: 0;
+    width: 100%;
+  }
+}
+
+/* ── Mobile (≤768px) ── */
+@media (max-width: 768px) {
+  .layout-main.sidebar-open,
+  .layout-main.sidebar-closed {
+    margin-left: 0;
+    width: 100%;
   }
 }

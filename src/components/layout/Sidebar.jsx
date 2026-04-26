@@ -16,13 +16,24 @@ export default function Sidebar({ open, onToggle }) {
   const { activeTheme } = useTheme();
   const navigate = useNavigate();
   const location = useLocation();
+  const [isMobile, setIsMobile] = React.useState(() => window.innerWidth <= 768);
+  const [isTablet, setIsTablet] = React.useState(() => window.innerWidth > 768 && window.innerWidth <= 1024);
+
+  React.useEffect(() => {
+    const handleResize = () => {
+      setIsMobile(window.innerWidth <= 768);
+      setIsTablet(window.innerWidth > 768 && window.innerWidth <= 1024);
+    };
+    window.addEventListener('resize', handleResize);
+    return () => window.removeEventListener('resize', handleResize);
+  }, []);
 
   const [searchQuery, setSearchQuery] = useState('');
   const [searchOpen, setSearchOpen] = useState(false);
   const [showThemePicker, setShowThemePicker] = useState(false);
   const [hoveredChat, setHoveredChat] = useState(null);
   const [chatMenuOpen, setChatMenuOpen] = useState(null);
-  const [seedsExpanded, setSeedsExpanded] = useState(true);
+  const [seedsExpanded, setSeedsExpanded] = useState(() => window.innerWidth > 768);
   const [tooltip, setTooltip] = useState(null);
   const tooltipTimeout = useRef(null);
 
@@ -78,6 +89,8 @@ export default function Sidebar({ open, onToggle }) {
     dispatch({ type: 'SET_ACTIVE_CONVERSATION', payload: id });
     navigate('/chat');
     setChatMenuOpen(null);
+    // Close sidebar on mobile after navigating
+    if (isMobile && open) onToggle();
   };
 
   const handlePin = (e, id) => {
@@ -265,64 +278,68 @@ export default function Sidebar({ open, onToggle }) {
 
   return (
     <>
-      {/* Backdrop on mobile */}
-      {open && <div className="sidebar-backdrop" onClick={onToggle} />}
+      {/* Backdrop on mobile/tablet when sidebar is open */}
+      {open && (isMobile || isTablet) && (
+        <div 
+          className={`sidebar-backdrop ${isMobile ? 'active' : 'tablet-active'}`} 
+          onClick={onToggle} 
+        />
+      )}
 
-      <aside className={`sidebar ${open ? 'open' : 'closed'}`}>
-        {/* Header row */}
-        <div className="sidebar-header">
-          <button className="icon-btn sidebar-toggle" onClick={onToggle} id="sidebar-toggle-btn" title="Toggle sidebar">
-            <Menu size={18} />
-          </button>
-          {open && (
-            <button
-              className={`icon-btn sidebar-search-btn ${searchOpen ? 'active-icon' : ''}`}
-              onClick={() => setSearchOpen(o => !o)}
-              title="Search chats"
-            >
-              <Search size={16} />
-            </button>
-          )}
-        </div>
 
-        {/* Search input */}
-        {open && searchOpen && (
-          <div className="sidebar-search anim-slide-up">
-            <Search size={13} />
+      <aside className={`sidebar ${open ? 'open' : 'closed'} ${isMobile && open ? 'mobile-open' : ''}`}>
+        {/* Permanent full-width search bar */}
+        {open && (
+          <div className="sidebar-search">
+            <Search size={14} className="search-icon-fixed" />
             <input
-              autoFocus
               placeholder="Search chats..."
               value={searchQuery}
               onChange={e => setSearchQuery(e.target.value)}
+              id="sidebar-search-input"
             />
-            {searchQuery && <button className="icon-btn" onClick={() => setSearchQuery('')}><X size={12} /></button>}
+            {searchQuery && (
+              <button className="search-clear-btn" onClick={() => setSearchQuery('')} title="Clear search">
+                <X size={12} />
+              </button>
+            )}
           </div>
         )}
 
-        {/* New Chat */}
-        <button className="sidebar-new-chat" onClick={handleNewChat} id="new-chat-btn" title="New Chat">
-          <Plus size={16} /> <span>New Chat</span>
-        </button>
-
         <div className="sidebar-nav">
+          {/* New Chat */}
+          <button className="sidebar-new-chat" onClick={handleNewChat} id="new-chat-btn" title="New Chat">
+            <Plus size={16} /> <span>New Chat</span>
+          </button>
+
+          {/* Inventory */}
+          <button
+            className={`sidebar-nav-item ${location.pathname === '/inventory' ? 'active' : ''}`}
+            onClick={() => { navigate('/inventory'); if (!open) onToggle(); }}
+            title="My Inventory"
+          >
+            <Package size={16} /> <span>My Inventory</span>
+          </button>
+
+
           {/* Explorer */}
           <button
             className={`sidebar-nav-item ${location.pathname === '/explorer' ? 'active' : ''}`}
             onClick={() => { navigate('/explorer'); if (!open) onToggle(); }}
-            title="My Garden"
+            title="Explorer"
           >
-            <FolderTree size={16} /> <span>My Garden</span>
+            <FolderTree size={16} /> <span>Explorer</span>
           </button>
 
           {/* Seeds */}
           <div className="sidebar-section">
             <button
-              className={`sidebar-nav-item ${location.pathname.startsWith('/seeds') ? 'active' : ''}`}
-              onClick={() => { navigate('/seeds'); if (!open) onToggle(); }}
+              className={`sidebar-nav-item ${location.pathname.startsWith('/experts') ? 'active' : ''}`}
+              onClick={() => { navigate('/experts'); if (!open) onToggle(); }}
               id="seeds-nav-btn"
-              title="Seeds"
+              title="Experts"
             >
-              <Sprout size={16} /> <span>Seeds</span>
+              <Sprout size={16} /> <span>Experts</span>
               {open && (
                 <button
                   className="expand-btn"
@@ -413,13 +430,6 @@ export default function Sidebar({ open, onToggle }) {
         </div>
 
         <div className="sidebar-footer">
-          <button
-            className={`sidebar-nav-item ${location.pathname === '/inventory' ? 'active' : ''}`}
-            onClick={() => { navigate('/inventory'); if (!open) onToggle(); }}
-            title="My Inventory"
-          >
-            <Package size={16} /> <span>My Inventory</span>
-          </button>
 
           {showThemePicker && (
             <div

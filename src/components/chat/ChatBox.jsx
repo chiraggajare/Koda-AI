@@ -22,7 +22,7 @@ const TOOLS = [
   { id: 'link', label: 'Link Analyzer', icon: Link },
 ];
 
-export default function ChatBox({ onSend, model, onModelChange, disabled = false, injectedText = '' }) {
+export default function ChatBox({ onSend, model, onModelChange, disabled = false, injectedText = '', fileSearchEnabled = true, webSearchEnabled = true }) {
   const { dispatch } = useChat();
   const [text, setText] = useState('');
   const [toolsOpen, setToolsOpen] = useState(false);
@@ -207,22 +207,26 @@ export default function ChatBox({ onSend, model, onModelChange, disabled = false
         <div className="chatbox-toolbar">
           {/* Left */}
           <div className="toolbar-left">
-            <input
-              ref={fileInputRef}
-              type="file"
-              multiple
-              hidden
-              onChange={handleFileChange}
-              id="file-upload-input"
-            />
-            <button
-              className="icon-btn toolbar-btn"
-              onClick={() => fileInputRef.current?.click()}
-              title="Attach file"
-              id="attach-btn"
-            >
-              <Plus size={16} />
-            </button>
+            {fileSearchEnabled && (
+              <>
+                <input
+                  ref={fileInputRef}
+                  type="file"
+                  multiple
+                  hidden
+                  onChange={handleFileChange}
+                  id="file-upload-input"
+                />
+                <button
+                  className="icon-btn toolbar-btn"
+                  onClick={() => fileInputRef.current?.click()}
+                  title="Attach file"
+                  id="attach-btn"
+                >
+                  <Plus size={16} />
+                </button>
+              </>
+            )}
             <button
               className={`toolbar-text-btn ${toolsOpen ? 'active' : ''}`}
               onClick={() => { setToolsOpen(o => !o); setModelOpen(false); }}

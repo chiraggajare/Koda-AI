@@ -83,7 +83,7 @@ export default function InventoryPage() {
         >
           <Package size={36} style={{ color: 'var(--accent)', opacity: 0.5 }} />
           <h2>{isDragging ? 'Drop files here' : 'No files yet'}</h2>
-          <p>Upload documents and images to use them in your chats and seeds</p>
+          <p>Upload documents and images to use them in your chats and experts</p>
           <span className="upload-cta">Click or drag & drop</span>
           <input id="inv-upload-hidden" type="file" multiple hidden onChange={handleUpload} />
         </label>

@@ -1,17 +1,18 @@
 import React, { useState } from 'react';
-import { useNavigate } from 'react-router-dom';
-import { Share2, MoreHorizontal, MessageSquareDashed, Pin, Trash2, Edit2, X } from 'lucide-react';
+import { useNavigate, useLocation } from 'react-router-dom';
+import { Share2, MoreHorizontal, MessageSquareDashed, Pin, Trash2, Menu, Sparkles, Settings, FolderOpen, Box, UserPlus } from 'lucide-react';
 import { useChat } from '../../context/ChatContext';
 import ProfileModal from '../modals/ProfileModal';
 import './Navbar.css';
 
-export default function Navbar({ variant = 'landing' }) {
+export default function Navbar({ onMenuToggle }) {
   const { state, dispatch, activeConversation } = useChat();
   const navigate = useNavigate();
+  const location = useLocation();
   const [profileOpen, setProfileOpen] = useState(false);
   const [chatMenuOpen, setChatMenuOpen] = useState(false);
 
-
+  const path = location.pathname;
 
   const handleDelete = () => {
     if (activeConversation && confirm('Delete this chat?')) {
@@ -33,88 +34,100 @@ export default function Navbar({ variant = 'landing' }) {
     navigate('/chat');
   };
 
-  const isEmptyChat = variant === 'landing' || (variant === 'chat' && activeConversation?.messages.length === 0);
+  // Determine page title/context
+  let pageTitle = '';
+  if (path === '/') pageTitle = '';
+  else if (path.startsWith('/chat')) pageTitle = activeConversation?.messages.length > 0 ? activeConversation.title : 'New Chat';
+  else if (path.startsWith('/experts/')) pageTitle = 'Expert Builder';
+  else if (path.startsWith('/experts')) pageTitle = 'Experts';
+  else if (path.startsWith('/inventory')) pageTitle = 'Inventory';
+  else if (path.startsWith('/explorer')) pageTitle = 'Explorer';
+  else if (path.startsWith('/settings')) pageTitle = 'Settings';
 
   return (
     <>
-      <nav className={`navbar ${isEmptyChat ? 'navbar-transparent' : ''}`} role="navigation">
-        {/* Brand */}
-        <button className="navbar-brand" onClick={() => navigate('/')} id="navbar-brand">
-          <span className="brand-dot" />
-          <span className="brand-name">Koda</span>
-        </button>
+      <nav className="navbar fixed-navbar" role="navigation">
+        <div className="navbar-left">
+          {/* Hamburger always available in the navbar on mobile */}
+          <button
+            className="icon-btn navbar-hamburger"
+            onClick={onMenuToggle}
+            title="Open menu"
+            id="navbar-hamburger-btn"
+          >
+            <Menu size={20} />
+          </button>
 
-        {/* Chat title (only in chat variant) */}
-        {variant === 'chat' && activeConversation && !isEmptyChat && (
-          <div className="navbar-title anim-fade-in" style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
-            <span>{activeConversation.title}</span>
-            {activeConversation.isTemporary && (
-              <span style={{ 
-                fontSize: '0.65rem', 
-                background: 'rgba(124, 106, 255, 0.15)', 
-                color: 'var(--accent)', 
-                padding: '2px 8px', 
-                borderRadius: '10px',
-                border: '1px solid var(--accent-dim)',
-                fontWeight: 600,
-                textTransform: 'uppercase',
-                letterSpacing: '0.5px'
-              }}>Temporary</span>
-            )}
-          </div>
-        )}
+          {/* Brand - hidden on mobile if there is a title to save space */}
+          <button className="navbar-brand" onClick={() => navigate('/')} id="navbar-brand">
+            <span className="brand-dot" />
+            <span className="brand-name">Koda</span>
+          </button>
+
+          {/* Page title / Context */}
+          {pageTitle && (
+            <div className="navbar-page-context anim-fade-in">
+              <span className="context-separator">/</span>
+              <span className="navbar-title-text">{pageTitle}</span>
+              {path.startsWith('/chat') && activeConversation?.isTemporary && (
+                <span className="navbar-temp-badge">Temporary</span>
+              )}
+            </div>
+          )}
+        </div>
 
         {/* Right actions */}
         <div className="navbar-actions">
-          {variant === 'landing' && (
-            <button className="icon-btn" onClick={handleTempChat} title="Temporary chat" id="temp-chat-btn">
-              <MessageSquareDashed size={18} />
-            </button>
-          )}
-
-          {variant === 'chat' && !isEmptyChat && (
+          {/* Page-specific actions */}
+          {path.startsWith('/chat') && (
             <>
-              <button className="pill-btn" id="share-btn" title="Share">
-                <Share2 size={13} /> Share
+              <button className="icon-btn" onClick={handleTempChat} title="Temporary chat">
+                <MessageSquareDashed size={18} />
               </button>
-              <div className="navbar-menu-wrap">
-                {chatMenuOpen && (
-                  <div 
-                    style={{ position: 'fixed', top: 0, left: 0, width: '100vw', height: '100vh', zIndex: 9998, background: 'transparent' }} 
-                    onClick={() => setChatMenuOpen(false)} 
-                  />
-                )}
-                <button
-                  className={`icon-btn ${chatMenuOpen ? 'active-icon' : ''}`}
-                  onClick={() => setChatMenuOpen(o => !o)}
-                  style={{ position: 'relative', zIndex: 9999 }}
-                  id="chat-options-btn"
-                >
-                  <MoreHorizontal size={18} />
-                </button>
-                {chatMenuOpen && (
-                  <div className="navbar-dropdown anim-scale-in" style={{ zIndex: 9999 }}>
-                    <button onClick={handlePin}>
-                      <Pin size={14} />
-                      {activeConversation?.pinned ? 'Unpin' : 'Pin'}
+              
+              {activeConversation?.messages.length > 0 && (
+                <>
+                  <button className="pill-btn navbar-share-btn" id="share-btn" title="Share">
+                    <Share2 size={13} /> <span className="navbar-share-label">Share</span>
+                  </button>
+                  <div className="navbar-menu-wrap">
+                    <button
+                      className={`icon-btn ${chatMenuOpen ? 'active-icon' : ''}`}
+                      onClick={() => setChatMenuOpen(o => !o)}
+                    >
+                      <MoreHorizontal size={18} />
                     </button>
-
-
-                    <button className="danger" onClick={handleDelete}>
-                      <Trash2 size={14} /> Delete
-                    </button>
+                    {chatMenuOpen && (
+                      <>
+                        <div className="dropdown-overlay" onClick={() => setChatMenuOpen(false)} />
+                        <div className="navbar-dropdown anim-scale-in">
+                          <button onClick={handlePin}>
+                            <Pin size={14} />
+                            {activeConversation?.pinned ? 'Unpin' : 'Pin'}
+                          </button>
+                          <button className="danger" onClick={handleDelete}>
+                            <Trash2 size={14} /> Delete
+                          </button>
+                        </div>
+                      </>
+                    )}
                   </div>
-                )}
-              </div>
+                </>
+              )}
             </>
           )}
 
-          {/* Avatar */}
+          {path.startsWith('/experts') && (
+            <button className="icon-btn" onClick={() => navigate('/experts/new')} title="Create Expert">
+              <UserPlus size={18} />
+            </button>
+          )}
+
+          {/* Avatar - Always visible */}
           <button
             className="navbar-avatar"
             onClick={() => setProfileOpen(true)}
             id="profile-avatar-btn"
-            title="Manage profile"
           >
             {state.user.avatar}
           </button>

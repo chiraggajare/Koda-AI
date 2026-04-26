@@ -150,3 +150,53 @@ a { text-decoration: none; color: inherit; }
   background-size: 200% 100%;
   animation: shimmer 1.5s infinite;
 }
+
+/* ══ Mobile global resets (≤768px) ══════════════════ */
+@media (max-width: 768px) {
+  html {
+    font-size: 14px;
+    /* Prevent font zoom on iOS when focusing inputs */
+    -webkit-text-size-adjust: 100%;
+  }
+
+  body {
+    /* Smooth momentum scrolling on iOS */
+    -webkit-overflow-scrolling: touch;
+  }
+
+  /* Prevent layout shifting from 100vh on mobile browsers */
+  #root {
+    min-height: -webkit-fill-available;
+  }
+
+  /* Larger minimum tap target size */
+  button, a, [role="button"] {
+    min-height: 44px;
+    min-width: 44px;
+  }
+
+  /* Exception for small icon-only chips/badges */
+  .badge, .cap-badge, .eb-attach-chip {
+    min-height: unset;
+    min-width: unset;
+  }
+
+  /* Prevent horizontal overflow everywhere */
+  * {
+    max-width: 100%;
+  }
+
+  /* Larger icon buttons for touch */
+  .icon-btn {
+    width: 40px;
+    height: 40px;
+  }
+}
+
+/* ══ Tablet global (769px\u20131024px) ══════════════════ */
+@media (max-width: 1024px) and (min-width: 769px) {
+  html {
+    font-size: 14px;
+  }
+}
+

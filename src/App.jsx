@@ -25,9 +25,9 @@ export default function App() {
               <Routes>
                 <Route path="/" element={<LandingPage />} />
                 <Route path="/chat" element={<ChatPage />} />
-                <Route path="/seeds" element={<SeedsPage />} />
-                <Route path="/seeds/new" element={<SeedBuilder />} />
-                <Route path="/seeds/:id" element={<SeedBuilder />} />
+                <Route path="/experts" element={<SeedsPage />} />
+                <Route path="/experts/new" element={<SeedBuilder />} />
+                <Route path="/experts/:id" element={<SeedBuilder />} />
                 <Route path="/inventory" element={<InventoryPage />} />
                 <Route path="/explorer" element={<ExplorerPage />} />
                 <Route path="/settings" element={<SettingsPage />} />
