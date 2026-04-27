@@ -1,9 +1,9 @@
 .chatbox-wrapper {
   position: relative;
   width: 100%;
-  max-width: 780px;
+  max-width: 840px;
   margin: 0 auto;
-  padding: 0 16px 8px;
+  padding: 0 24px 8px;
 }
 
 /* Tools panel */
@@ -371,28 +371,39 @@
     padding: 0 8px 6px;
     max-width: 100%;
   }
+
   .chatbox {
     padding: 12px 14px 10px;
     border-radius: var(--radius-lg);
   }
+
   .chatbox-input {
-    font-size: 1rem; /* larger font for mobile readability */
+    font-size: 1rem;
+    /* larger font for mobile readability */
   }
+
   .toolbar-text-btn span {
-    display: none; /* hide "Tools" label, just show icon */
+    display: none;
+    /* hide "Tools" label, just show icon */
   }
+
   .toolbar-text-btn {
     padding: 5px 8px;
   }
+
   .model-selector-btn span {
-    display: none; /* hide model label on mobile */
+    display: none;
+    /* hide model label on mobile */
   }
+
   .tool-chip {
     font-size: 0.82rem;
     padding: 8px 12px;
     min-height: 36px;
   }
+
   .model-option {
-    padding: 14px 16px; /* larger touch targets */
+    padding: 14px 16px;
+    /* larger touch targets */
   }
 }

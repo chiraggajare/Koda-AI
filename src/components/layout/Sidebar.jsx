@@ -73,6 +73,7 @@ export default function Sidebar({ open, onToggle }) {
 
   const conversations = state.conversations.filter(c =>
     c.messages.length > 0 &&
+    !c.isTemporary &&
     (searchQuery === '' || c.title.toLowerCase().includes(searchQuery.toLowerCase()))
   );
 

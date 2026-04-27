@@ -34,7 +34,13 @@ export default function MessageBubble({ message, conversationId, isEditing, setE
   const [copied, setCopied] = useState(false);
   const [moreOpen, setMoreOpen] = useState(false);
   const [editValue, setEditValue] = useState(message.content);
+  const [isSpeaking, setIsSpeaking] = useState(false);
   const textareaRef = useRef(null);
+
+  const handleStopSpeech = () => {
+    window.speechSynthesis.cancel();
+    setIsSpeaking(false);
+  };
 
   useEffect(() => {
     if (isEditing) {
@@ -87,7 +93,11 @@ export default function MessageBubble({ message, conversationId, isEditing, setE
 
   const handleListen = () => {
     if ('speechSynthesis' in window) {
+      window.speechSynthesis.cancel(); // Stop any current speech
       const utt = new SpeechSynthesisUtterance(message.content);
+      utt.onstart = () => setIsSpeaking(true);
+      utt.onend = () => setIsSpeaking(false);
+      utt.onerror = () => setIsSpeaking(false);
       window.speechSynthesis.speak(utt);
     }
   };
@@ -128,15 +138,21 @@ export default function MessageBubble({ message, conversationId, isEditing, setE
             />
           )}
 
-          {/* User message hover actions */}
-          {isUser && !isLoading && !isEditing && (
-            <div className="user-message-actions">
+          {/* Message hover actions (Pill style) */}
+          {!isLoading && !isEditing && (
+            <div className={`message-bubble-actions ${isUser ? 'user-actions' : 'ai-actions'}`}>
               <button className={`action-btn-sm ${copied ? 'copied' : ''}`} onClick={handleCopy} title="Copy">
                 {copied ? <Check size={12} /> : <Copy size={12} />}
               </button>
-              <button className="action-btn-sm" title="Edit" onClick={() => setEditingId && setEditingId(message.id)}>
-                <Edit2 size={12} />
-              </button>
+              {isUser ? (
+                <button className="action-btn-sm" title="Edit" onClick={() => setEditingId && setEditingId(message.id)}>
+                  <Edit2 size={12} />
+                </button>
+              ) : (
+                <button className="action-btn-sm" title="Redo" onClick={handleRedo}>
+                  <RotateCcw size={12} />
+                </button>
+              )}
             </div>
           )}
 
@@ -149,12 +165,12 @@ export default function MessageBubble({ message, conversationId, isEditing, setE
         {/* Secondary Edit Box directly below the message */}
         {isEditing && (
           <div className="inline-edit-wrapper anim-fade-in-up" style={{
-             width: '100%', background: 'var(--bg-glass)',
-             borderRadius: '16px', position: 'relative', display: 'flex', flexDirection: 'column',
-             border: '1px solid var(--accent-dim)', backdropFilter: 'blur(16px)',
-             boxShadow: '0 8px 32px rgba(0, 0, 0, 0.4)', marginTop: '8px'
+            width: '100%', background: 'var(--bg-glass)',
+            borderRadius: '16px', position: 'relative', display: 'flex', flexDirection: 'column',
+            border: '1px solid var(--accent-dim)', backdropFilter: 'blur(16px)',
+            boxShadow: '0 8px 32px rgba(0, 0, 0, 0.4)', marginTop: '8px'
           }}>
-            <div style={{ fontSize: '0.75rem', color: 'var(--accent)', padding: '12px 16px 0', display: 'flex', alignItems: 'center', gap: '6px', fontWeight: 600 }}><Edit2 size={12}/> Editing message...</div>
+            <div style={{ fontSize: '0.75rem', color: 'var(--accent)', padding: '12px 16px 0', display: 'flex', alignItems: 'center', gap: '6px', fontWeight: 600 }}><Edit2 size={12} /> Editing message...</div>
             <textarea
               ref={textareaRef}
               className="inline-edit-textarea"
@@ -166,23 +182,23 @@ export default function MessageBubble({ message, conversationId, isEditing, setE
               }}
               autoFocus
               style={{
-                 width: '100%', minHeight: '60px', background: 'transparent',
-                 border: 'none', color: 'var(--text-primary)', padding: '12px 16px',
-                 fontFamily: 'inherit', resize: 'none', outline: 'none',
-                 overflow: 'hidden', lineHeight: '1.6', fontSize: '0.98rem'
+                width: '100%', minHeight: '60px', background: 'transparent',
+                border: 'none', color: 'var(--text-primary)', padding: '12px 16px',
+                fontFamily: 'inherit', resize: 'none', outline: 'none',
+                overflow: 'hidden', lineHeight: '1.6', fontSize: '0.98rem'
               }}
             />
             <div className="inline-edit-actions" style={{ padding: '8px 12px', display: 'flex', justifyContent: 'flex-end', gap: '8px', borderTop: '1px solid rgba(255, 255, 255, 0.05)' }}>
-              <button 
-                onClick={() => setEditingId && setEditingId(null)} 
-                style={{ 
-                  padding: '8px 20px', 
-                  background: 'var(--bg-secondary)', 
-                  borderRadius: '24px', 
-                  color: 'var(--text-primary)', 
-                  cursor: 'pointer', 
-                  border: '1px solid var(--border)', 
-                  fontSize: '0.9rem', 
+              <button
+                onClick={() => setEditingId && setEditingId(null)}
+                style={{
+                  padding: '8px 20px',
+                  background: 'var(--bg-secondary)',
+                  borderRadius: '24px',
+                  color: 'var(--text-primary)',
+                  cursor: 'pointer',
+                  border: '1px solid var(--border)',
+                  fontSize: '0.9rem',
                   fontWeight: 500,
                   transition: 'all 0.2s'
                 }}
@@ -191,19 +207,19 @@ export default function MessageBubble({ message, conversationId, isEditing, setE
               >
                 Cancel
               </button>
-              <button 
-                onClick={handleSaveEdit} 
-                disabled={!editValue.trim() || editValue === message.content} 
-                style={{ 
-                  padding: '8px 24px', 
-                  background: editValue.trim() && editValue !== message.content ? 'var(--accent)' : 'var(--bg-glass-hover)', 
-                  borderRadius: '24px', 
-                  color: '#fff', 
-                  cursor: 'pointer', 
-                  border: 'none', 
-                  fontSize: '0.9rem', 
-                  fontWeight: 600, 
-                  transition: 'all 0.2s', 
+              <button
+                onClick={handleSaveEdit}
+                disabled={!editValue.trim() || editValue === message.content}
+                style={{
+                  padding: '8px 24px',
+                  background: editValue.trim() && editValue !== message.content ? 'var(--accent)' : 'var(--bg-glass-hover)',
+                  borderRadius: '24px',
+                  color: '#fff',
+                  cursor: 'pointer',
+                  border: 'none',
+                  fontSize: '0.9rem',
+                  fontWeight: 600,
+                  transition: 'all 0.2s',
                   opacity: (!editValue.trim() || editValue === message.content) ? 0.5 : 1,
                   boxShadow: editValue.trim() && editValue !== message.content ? 'var(--shadow-accent)' : 'none'
                 }}
@@ -214,9 +230,9 @@ export default function MessageBubble({ message, conversationId, isEditing, setE
           </div>
         )}
 
-        {/* Action row — only for AI messages */}
+        {/* Floating Action Menu below AI bubble - Modern style */}
         {!isUser && !isLoading && (
-          <div className={`message-actions ${moreOpen ? 'menu-open' : ''}`}>
+          <div className="ai-floating-actions anim-scale-in">
             <button
               className={`action-btn ${message.liked === true ? 'active-like' : ''}`}
               onClick={() => handleLike(true)}
@@ -231,51 +247,22 @@ export default function MessageBubble({ message, conversationId, isEditing, setE
             >
               <ThumbsDown size={13} />
             </button>
-            <button className="action-btn" onClick={handleRedo} title="Redo">
+            <button className="action-btn" onClick={handleRedo} title="Regenerate">
               <RotateCcw size={13} />
             </button>
             <button className={`action-btn ${copied ? 'copied' : ''}`} onClick={handleCopy} title="Copy">
               {copied ? <Check size={13} /> : <Copy size={13} />}
             </button>
-            <div className="action-more-wrap">
-              <button
-                className={`action-btn ${moreOpen ? 'active-btn' : ''}`}
-                onClick={() => setMoreOpen(o => !o)}
-                title="More"
-              >
-                <MoreHorizontal size={13} />
+            
+            {isSpeaking ? (
+              <button className="action-btn active-btn" onClick={handleStopSpeech} title="Stop reading">
+                <VolumeX size={13} />
               </button>
-              {moreOpen && (
-                <div className="action-dropdown anim-scale-in">
-                  <button onClick={() => { handleRedo(); setMoreOpen(false); }}>
-                    <RotateCcw size={13} /> Recheck response
-                  </button>
-                  <button onClick={() => { handleListen(); setMoreOpen(false); }}>
-                    <Volume2 size={13} /> Listen
-                  </button>
-                  <button onClick={() => { window.speechSynthesis.cancel(); setMoreOpen(false); }}>
-                    <VolumeX size={13} /> Stop Speech
-                  </button>
-                  <button onClick={() => setMoreOpen(false)}>
-                    <Share size={13} /> Export
-                  </button>
-                  <button onClick={() => setMoreOpen(false)}>
-                    <Mail size={13} /> Draft in Gmail
-                  </button>
-                  <button className="danger" onClick={() => setMoreOpen(false)}>
-                    <Flag size={13} /> Report
-                  </button>
-                  <div className="action-version">
-                    {message.model && (
-                      <>
-                        <ModelIcon size={11} />
-                        <span>Generated by {MODEL_LABELS[message.model] || 'Koda'}</span>
-                      </>
-                    )}
-                  </div>
-                </div>
-              )}
-            </div>
+            ) : (
+              <button className="action-btn" onClick={handleListen} title="Read out loud">
+                <Volume2 size={13} />
+              </button>
+            )}
           </div>
         )}
       </div>

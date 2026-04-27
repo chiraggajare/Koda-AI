@@ -501,7 +501,7 @@ export default function ChatList({ onItemPreview }) {
 
     return treeItems.map(tc => {
       if (tc.type === 'chat') {
-        const chat = chatState.conversations.find(c => c.id === tc.id);
+        const chat = chatState.conversations.find(c => c.id === tc.id && !c.isTemporary);
         if (!chat) return null;
         return { ...tc, actualChat: chat, pinned: pinnedIds.has(tc.id) };
       }

@@ -9,6 +9,7 @@ const initialState = {
   seeds: [],
   inventory: [],
   pinnedChats: [],
+  isTemporaryMode: false,
 };
 
 function chatReducer(state, action) {
@@ -17,10 +18,20 @@ function chatReducer(state, action) {
     case 'SET_USER':
       return { ...state, user: { ...state.user, ...action.payload } };
 
+    case 'TOGGLE_TEMPORARY_MODE': {
+      const isNowTemp = !state.isTemporaryMode;
+      return {
+        ...state,
+        isTemporaryMode: isNowTemp,
+        // If we switch to temp mode, we should ideally start a new temp chat
+        // If we switch out, we stay on whatever was active or go to the latest non-temp chat
+      };
+    }
+
     case 'NEW_CONVERSATION': {
       const requestedSeedId = action.payload?.seedId || null;
       const requestedSeedName = requestedSeedId ? state.seeds.find(s => s.id === requestedSeedId)?.name || 'Expert' : 'New Chat';
-      const isTemporary = action.payload?.isTemporary || false;
+      const isTemporary = action.payload?.isTemporary !== undefined ? action.payload.isTemporary : state.isTemporaryMode;
 
       // First check if there's already an empty conversation matching this EXACT seed configuration
       // We skip this check for temporary chats to ensure they are unique if requested
@@ -67,10 +78,12 @@ function chatReducer(state, action) {
             ? {
               ...c,
               messages: [...c.messages, message],
-              title: c.messages.length === 0 && message.role === 'user'
-                ? c.seedId
-                  ? `${state.seeds.find(s => s.id === c.seedId)?.name || 'Expert'} - ${message.content.split(' ').slice(0, 2).join(' ').slice(0, 20)}`
-                  : message.content.slice(0, 40).trim() || 'New Chat'
+              title: (c.messages.length === 0 && message.role === 'user')
+                ? c.isTemporary 
+                  ? 'Temporary Chat'
+                  : c.seedId
+                    ? `${state.seeds.find(s => s.id === c.seedId)?.name || 'Expert'} - ${message.content.split(' ').slice(0, 2).join(' ').slice(0, 20)}`
+                    : message.content.slice(0, 40).trim() || 'New Chat'
                 : c.title,
             }
             : c
@@ -216,10 +229,17 @@ export function ChatProvider({ children }) {
     } catch { return init; }
   });
 
-  // Persist to localStorage
+  // Persist to localStorage (EXCEPT temporary chats and temporary mode state)
   useEffect(() => {
     try {
-      localStorage.setItem('koda_state', JSON.stringify(state));
+      const stateToSave = {
+        ...state,
+        conversations: state.conversations.filter(c => !c.isTemporary),
+        activeConversationId: state.conversations.find(c => c.id === state.activeConversationId)?.isTemporary
+          ? (state.conversations.find(c => !c.isTemporary)?.id || null)
+          : state.activeConversationId
+      };
+      localStorage.setItem('koda_state', JSON.stringify(stateToSave));
     } catch { }
   }, [state]);
 

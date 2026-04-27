@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import { useNavigate, useLocation } from 'react-router-dom';
-import { Share2, MoreHorizontal, MessageSquareDashed, Pin, Trash2, Menu, Sparkles, Settings, FolderOpen, Box, UserPlus } from 'lucide-react';
+import { Share2, MoreHorizontal, MessageSquareDashed, Pin, Trash2, Menu, Sparkles, Settings, FolderOpen, Box, UserPlus, Shield, ShieldCheck } from 'lucide-react';
 import { useChat } from '../../context/ChatContext';
 import ProfileModal from '../modals/ProfileModal';
 import './Navbar.css';
@@ -29,9 +29,20 @@ export default function Navbar({ onMenuToggle }) {
     setChatMenuOpen(false);
   };
 
-  const handleTempChat = () => {
-    dispatch({ type: 'NEW_CONVERSATION', payload: { isTemporary: true } });
-    navigate('/chat');
+  const handleTempToggle = () => {
+    const wasOff = !state.isTemporaryMode;
+    dispatch({ type: 'TOGGLE_TEMPORARY_MODE' });
+    
+    if (wasOff) {
+      // Create a new temporary chat immediately
+      dispatch({ type: 'NEW_CONVERSATION', payload: { isTemporary: true, force: true } });
+      navigate('/chat');
+    } else {
+      // Navigate to home or stay on last non-temp chat
+      if (activeConversation?.isTemporary) {
+        navigate('/');
+      }
+    }
   };
 
   // Determine page title/context
@@ -78,13 +89,23 @@ export default function Navbar({ onMenuToggle }) {
 
         {/* Right actions */}
         <div className="navbar-actions">
+          {/* Temp chat toggle switch */}
+          <div className="temp-toggle-wrap">
+            <span className="temp-toggle-label">Temp chat</span>
+            <button 
+              className={`temp-switch ${state.isTemporaryMode ? 'on' : 'off'}`}
+              onClick={handleTempToggle}
+              title={state.isTemporaryMode ? "Disable Temporary Mode" : "Enable Temporary Mode"}
+            >
+              <div className="switch-thumb">
+                {state.isTemporaryMode ? <ShieldCheck size={12} /> : <Shield size={12} />}
+              </div>
+            </button>
+          </div>
+
           {/* Page-specific actions */}
           {path.startsWith('/chat') && (
             <>
-              <button className="icon-btn" onClick={handleTempChat} title="Temporary chat">
-                <MessageSquareDashed size={18} />
-              </button>
-              
               {activeConversation?.messages.length > 0 && (
                 <>
                   <button className="pill-btn navbar-share-btn" id="share-btn" title="Share">
@@ -116,6 +137,7 @@ export default function Navbar({ onMenuToggle }) {
               )}
             </>
           )}
+
 
           {path.startsWith('/experts') && (
             <button className="icon-btn" onClick={() => navigate('/experts/new')} title="Create Expert">
